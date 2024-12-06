@@ -1,0 +1,32 @@
+digraph "DFG for'_Z6kernelPfS_S_' function" {
+        Node9add[shape=record, label="(9) add"];
+        Node10cmp[shape=record, label="(10) cmp"];
+        Node11br[shape=record, label="(11) br"];
+        Node1phi[shape=record, label="(1) phi"];
+        Node2getelementptr[shape=record, label="(2) getelementptr"];
+        Node4getelementptr[shape=record, label="(4) getelementptr"];
+        Node3load[shape=record, label="(3) load"];
+        Node5load[shape=record, label="(5) load"];
+        Node6mul[shape=record, label="(6) mul"];
+        Node7add[shape=record, label="(7) add"];
+        Node0phi[shape=record, label="(0) phi"];
+        Node8store[shape=record, label="(8) store"];
+edge [color=blue]
+        Node11br -> Node0phi
+        Node11br -> Node1phi
+edge [color=red]
+        Node7add -> Node0phi
+        Node9add -> Node1phi
+        Node1phi -> Node2getelementptr
+        Node2getelementptr -> Node3load
+        Node1phi -> Node4getelementptr
+        Node4getelementptr -> Node5load
+        Node3load -> Node6mul
+        Node5load -> Node6mul
+        Node0phi -> Node7add
+        Node6mul -> Node7add
+        Node7add -> Node8store
+        Node1phi -> Node9add
+        Node9add -> Node10cmp
+        Node10cmp -> Node11br
+}

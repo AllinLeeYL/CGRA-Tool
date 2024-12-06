@@ -1,0 +1,33 @@
+digraph G {
+    phi0 [earliestCycle=0, latestCycle=0];
+    add2 [earliestCycle=1, latestCycle=3];
+    phi4 [earliestCycle=0, latestCycle=3];
+    fadd6 [earliestCycle=4, latestCycle=4];
+    fmul7 [earliestCycle=3, latestCycle=3];
+    load8 [earliestCycle=2, latestCycle=2];
+    getelementptr9 [earliestCycle=1, latestCycle=1];
+    load11 [earliestCycle=2, latestCycle=2];
+    getelementptr12 [earliestCycle=1, latestCycle=1];
+    store14 [earliestCycle=5, latestCycle=5];
+    icmp16 [earliestCycle=2, latestCycle=4];
+    br18 [earliestCycle=3, latestCycle=5];
+edge [color=black]
+    phi0 -> add2;
+    phi4 -> fadd6;
+    phi0 -> getelementptr9;
+    getelementptr9 -> load8;
+    load8 -> fmul7;
+    phi0 -> getelementptr12;
+    getelementptr12 -> load11;
+    load11 -> fmul7;
+    fmul7 -> fadd6;
+    fadd6 -> store14;
+    add2 -> icmp16;
+    icmp16 -> br18;
+edge [color=blue]
+    add2 -> phi0;
+    fadd6 -> phi4;
+edge [color=red]
+    br18 -> phi0;
+    br18 -> phi4;
+}

@@ -1,0 +1,51 @@
+digraph G {
+    phi0 [earliestCycle=0, latestCycle=0];
+    const_int_0 [earliestCycle=-1, latestCycle=-1];
+    add2 [earliestCycle=1, latestCycle=3];
+    const_int_1 [earliestCycle=-1, latestCycle=-1];
+    phi4 [earliestCycle=0, latestCycle=3];
+    value_5 [earliestCycle=-1, latestCycle=-1];
+    fadd6 [earliestCycle=4, latestCycle=4];
+    fmul7 [earliestCycle=3, latestCycle=3];
+    load8 [earliestCycle=2, latestCycle=2];
+    getelementptr9 [earliestCycle=1, latestCycle=1];
+    value_10 [earliestCycle=-1, latestCycle=-1];
+    load11 [earliestCycle=2, latestCycle=2];
+    getelementptr12 [earliestCycle=1, latestCycle=1];
+    value_13 [earliestCycle=-1, latestCycle=-1];
+    store14 [earliestCycle=5, latestCycle=5];
+    value_15 [earliestCycle=-1, latestCycle=-1];
+    icmp16 [earliestCycle=2, latestCycle=4];
+    const_int_32 [earliestCycle=-1, latestCycle=-1];
+    br18 [earliestCycle=3, latestCycle=5];
+    value_19 [earliestCycle=-1, latestCycle=-1];
+    value_20 [earliestCycle=-1, latestCycle=-1];
+edge [color=black]
+    const_int_0 -> phi0;
+    phi0 -> add2;
+    const_int_1 -> add2;
+    value_5 -> phi4;
+    phi4 -> fadd6;
+    value_10 -> getelementptr9;
+    phi0 -> getelementptr9;
+    getelementptr9 -> load8;
+    load8 -> fmul7;
+    value_13 -> getelementptr12;
+    phi0 -> getelementptr12;
+    getelementptr12 -> load11;
+    load11 -> fmul7;
+    fmul7 -> fadd6;
+    fadd6 -> store14;
+    value_15 -> store14;
+    add2 -> icmp16;
+    const_int_32 -> icmp16;
+    icmp16 -> br18;
+    value_19 -> br18;
+    value_20 -> br18;
+edge [color=blue]
+    add2 -> phi0;
+    fadd6 -> phi4;
+edge [color=red]
+    br18 -> phi0;
+    br18 -> phi4;
+}

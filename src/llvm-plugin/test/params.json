@@ -1,0 +1,17 @@
+{
+  "kernel"                : "main.extracted",
+  "targetLoopsID"         : [0],
+  "row"                   : 2,
+  "column"                : 2,
+  "heuristicMapping"      : true,
+  "optLatency"            : {
+                              "load" : 2,
+                              "store": 2
+                            },
+  "optPipelined"          : ["load", "store"],
+  "additionalFunc"        : {
+                              "load" : [4],
+                              "store": [4]
+                            }
+}
+

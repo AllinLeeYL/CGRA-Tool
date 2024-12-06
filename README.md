@@ -1,2 +1,3 @@
-# CGRA-Mapper
-A CGRA mapper integrated with LLVM.
+# CGRA-Tool
+
+A CGRA tool, including a mapper that can map LLVM loops in the form of IR to targeted CGRA, integrated with LLVM as a Pass or an executable tool.

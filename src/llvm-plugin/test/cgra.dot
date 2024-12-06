@@ -1,0 +1,14 @@
+digraph G {
+    pe0;
+    pe1;
+    pe2;
+    pe3;
+    pe0 -> pe1;
+    pe1 -> pe0;
+    pe0 -> pe2;
+    pe2 -> pe0;
+    pe1 -> pe3;
+    pe3 -> pe1;
+    pe2 -> pe3;
+    pe3 -> pe2;
+}

@@ -1,0 +1,104 @@
+digraph G {
+    subgraph cluster_T0 {
+        color=blue;
+        label="T0";
+        FU0_T0 [z=0 color=red];
+        Mux0_T0 [z=0];
+        FU1_T0 [z=0 color=red];
+        Mux1_T0 [z=0];
+        FU2_T0 [z=0 color=red];
+        Mux2_T0 [z=0];
+        FU3_T0 [z=0 label="FU3_T0\nphi0" color=red];
+        Mux3_T0 [z=0];
+    }
+    subgraph cluster_T1 {
+        color=blue;
+        label="T1";
+        FU0_T1 [z=1 color=red];
+        Mux0_T1 [z=1];
+        FU1_T1 [z=1 color=red];
+        Mux1_T1 [z=1];
+        FU2_T1 [z=1 label="FU2_T1\ngetelementptr8" color=red];
+        Mux2_T1 [z=1];
+        FU3_T1 [z=1 label="FU3_T1\nadd2" color=red];
+        Mux3_T1 [z=1];
+    }
+    subgraph cluster_T2 {
+        color=blue;
+        label="T2";
+        FU0_T2 [z=2 color=red];
+        Mux0_T2 [z=2];
+        FU1_T2 [z=2 label="FU1_T2\nicmp12" color=red];
+        Mux1_T2 [z=2];
+        FU2_T2 [z=2 label="FU2_T2\nload7" color=red];
+        Mux2_T2 [z=2];
+        FU3_T2 [z=2 label="FU3_T2\nphi4" color=red];
+        Mux3_T2 [z=2];
+    }
+    subgraph cluster_T3 {
+        color=blue;
+        label="T3";
+        FU0_T3 [z=3 color=red];
+        Mux0_T3 [z=3];
+        FU1_T3 [z=3 label="FU1_T3\nbr14" color=red];
+        Mux1_T3 [z=3];
+        FU2_T3 [z=3 color=red];
+        Mux2_T3 [z=3];
+        FU3_T3 [z=3 label="FU3_T3\nadd6" color=red];
+        Mux3_T3 [z=3];
+    }
+    edge [color="blue"];
+    Mux2_T1 -> FU2_T1;
+    Mux3_T1 -> FU3_T1;
+    FU3_T0 -> Mux3_T1;
+    Mux1_T2 -> FU1_T2;
+    Mux2_T2 -> FU2_T2;
+    FU2_T1 -> Mux2_T2;
+    Mux1_T3 -> FU1_T3;
+    FU1_T2 -> Mux1_T3;
+    Mux3_T3 -> FU3_T3;
+    FU3_T2 -> Mux3_T3;
+    FU3_T1 -> Mux1_T2;
+    FU2_T2 -> Mux3_T3;
+    FU3_T0 -> Mux2_T1;
+    FU3_T1 -> Mux2_T2;
+    edge [color="black" style="dotted"];
+    Mux0_T0 -> FU0_T0;
+    Mux1_T0 -> FU1_T0;
+    Mux2_T0 -> FU2_T0;
+    Mux3_T0 -> FU3_T0;
+    Mux0_T1 -> FU0_T1;
+    FU0_T0 -> Mux0_T1;
+    Mux1_T1 -> FU1_T1;
+    FU1_T0 -> Mux1_T1;
+    FU2_T0 -> Mux2_T1;
+    Mux0_T2 -> FU0_T2;
+    FU0_T1 -> Mux0_T2;
+    FU1_T1 -> Mux1_T2;
+    Mux3_T2 -> FU3_T2;
+    FU3_T1 -> Mux3_T2;
+    Mux0_T3 -> FU0_T3;
+    FU0_T2 -> Mux0_T3;
+    Mux2_T3 -> FU2_T3;
+    FU2_T2 -> Mux2_T3;
+    FU0_T0 -> Mux1_T1;
+    FU0_T1 -> Mux1_T2;
+    FU0_T2 -> Mux1_T3;
+    FU1_T0 -> Mux0_T1;
+    FU1_T1 -> Mux0_T2;
+    FU1_T2 -> Mux0_T3;
+    FU0_T0 -> Mux2_T1;
+    FU0_T1 -> Mux2_T2;
+    FU0_T2 -> Mux2_T3;
+    FU2_T0 -> Mux0_T1;
+    FU2_T1 -> Mux0_T2;
+    FU2_T2 -> Mux0_T3;
+    FU1_T0 -> Mux3_T1;
+    FU1_T1 -> Mux3_T2;
+    FU1_T2 -> Mux3_T3;
+    FU3_T0 -> Mux1_T1;
+    FU3_T2 -> Mux1_T3;
+    FU2_T0 -> Mux3_T1;
+    FU2_T1 -> Mux3_T2;
+    FU3_T2 -> Mux2_T3;
+}
