@@ -10,7 +10,7 @@ project(CGRA-Tool
 # include(CPack)
 
 # whether to compile LLVM pass plugin (default: on)
-set(BUILD_LLVM_PASSES ON)
+set (BUILD_LLVM_PASSES OFF)
 set (CMAKE_CXX_STANDARD 20)
 set (BUILD_SHARED_LIBS ON)
 # set(CMAKE_MACOSX_RPATH 0)
@@ -31,28 +31,35 @@ message(STATUS "Using LLVM config at ${LLVM_CONFIG}")
 if (LLVM_PACKAGE_VERSION LESS 18.1.0)
     message(WARNING "Current LLVM version ${LLVM_PACKAGE_VERSION} is too low!")
 endif()
-
 include(AddLLVM)
+add_definitions(${LLVM_DEFINITIONS})
+set(NO_RTTI "-fno-rtti")
+add_definitions(${NO_RTTI})
+# llvm_map_components_to_libnames(llvm_libs
+#         support core irreader native passes option codegen
+# )
 
 ## OR-TOOLS ##
 find_package(ortools REQUIRED CONFIG)
 get_target_property(ORTOOLS_INCLUDE_DIRS ortools::ortools INTERFACE_INCLUDE_DIRECTORIES)
 list(GET ORTOOLS_INCLUDE_DIRS 0 ORTOOLS_INCLUDE_DIRS)
 
-set_target_properties(ortools::ortools PROPERTIES
-    IMPORTED_NO_SONAME FALSE
-    IMPORTED_LOCATION "${ORTOOLS_INCLUDE_DIRS}/../lib/libortools.9.dylib"
-)
+# set_target_properties(ortools::ortools PROPERTIES
+#     IMPORTED_NO_SONAME FALSE
+#     IMPORTED_LOCATION "${ORTOOLS_INCLUDE_DIRS}/../lib/libortools.9.dylib"
+# )
 
 include_directories(BEFORE
     ${INCLUDE_DIR}
     ${LLVM_INCLUDE_DIRS}
-    ${ORTOOLS_INCLUDE_DIRS})
+    ${ORTOOLS_INCLUDE_DIRS}
+)
+set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib:${CMAKE_INSTALL_PREFIX}/lib64")
 
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/src)
 
 install(TARGETS cgra-tool hardware-modeler dfg mapper)
-install(FILES 
-    ${ORTOOLS_INCLUDE_DIRS}/../lib/libortools.9.dylib
-    ${ORTOOLS_INCLUDE_DIRS}/../lib/libortools.9.10.dylib
-    TYPE LIB)
+# install(FILES 
+#     ${ORTOOLS_INCLUDE_DIRS}/../lib/libortools.9.dylib
+#     ${ORTOOLS_INCLUDE_DIRS}/../lib/libortools.9.10.dylib
+#     TYPE LIB)

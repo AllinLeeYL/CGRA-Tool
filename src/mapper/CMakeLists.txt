@@ -14,9 +14,9 @@ target_link_libraries(mapper
     PUBLIC ortools::ortools
 )
 
-add_custom_command(TARGET mapper
-    POST_BUILD
-    COMMAND ${CMAKE_COMMAND}
-    ARGS -E copy ${ORTOOLS_INCLUDE_DIRS}/../lib/libortools.9.dylib ${CMAKE_BINARY_DIR}/lib/.
-    COMMAND ${CMAKE_COMMAND}
-    ARGS -E copy ${ORTOOLS_INCLUDE_DIRS}/../lib/libortools.9.10.dylib ${CMAKE_BINARY_DIR}/lib/.)
+# add_custom_command(TARGET mapper
+#     POST_BUILD
+#     COMMAND ${CMAKE_COMMAND}
+#     ARGS -E copy ${ORTOOLS_INCLUDE_DIRS}/../lib/libortools.9.dylib ${CMAKE_BINARY_DIR}/lib/.
+#     COMMAND ${CMAKE_COMMAND}
+#     ARGS -E copy ${ORTOOLS_INCLUDE_DIRS}/../lib/libortools.9.10.dylib ${CMAKE_BINARY_DIR}/lib/.)

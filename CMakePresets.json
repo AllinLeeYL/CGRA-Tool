@@ -1,5 +1,10 @@
 {
-    "version": 8,
+    "version": 5,
+	"cmakeMinimumRequired": {
+        "major": 3,
+        "minor": 24,
+        "patch": 0
+    },
     "configurePresets": [
         {
             "name": "debug-make",
@@ -9,7 +14,7 @@
             "binaryDir": "${sourceDir}/build/${presetName}",
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "Debug",
-                "CMAKE_PREFIX_PATH": "/usr/lib/cmake/llvm;/Users/allin/Code/or-tools-14.4.1/lib/cmake/Cbc;/Users/allin/Code/or-tools-14.4.1/lib/cmake/Cgl;/Users/allin/Code/or-tools-14.4.1/lib/cmake/Clp;/Users/allin/Code/or-tools-14.4.1/lib/cmake/CoinUtils;/Users/allin/Code/or-tools-14.4.1/lib/cmake/Osi;/Users/allin/Code/or-tools-14.4.1/lib/cmake/ZLIB;/Users/allin/Code/or-tools-14.4.1/lib/cmake/absl;/Users/allin/Code/or-tools-14.4.1/lib/cmake/ortools;/Users/allin/Code/or-tools-14.4.1/lib/cmake/protobuf;/Users/allin/Code/or-tools-14.4.1/lib/cmake/re2;/Users/allin/Code/or-tools-14.4.1/lib/cmake/scip;/Users/allin/Code/or-tools-14.4.1/lib/cmake/utf8_range;/opt/homebrew/opt/abseil/lib/cmake/absl",
+                "CMAKE_PREFIX_PATH": "",
                 "CMAKE_TOOLCHAIN_FILE": "",
                 "CMAKE_INSTALL_PREFIX": "${sourceDir}/install/${presetName}"
             }
@@ -22,7 +27,7 @@
             "binaryDir": "${sourceDir}/build/${presetName}",
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "Release",
-                "CMAKE_PREFIX_PATH": "/usr/lib/cmake/llvm;/Users/allin/Code/or-tools-14.4.1/lib/cmake/Cbc;/Users/allin/Code/or-tools-14.4.1/lib/cmake/Cgl;/Users/allin/Code/or-tools-14.4.1/lib/cmake/Clp;/Users/allin/Code/or-tools-14.4.1/lib/cmake/CoinUtils;/Users/allin/Code/or-tools-14.4.1/lib/cmake/Osi;/Users/allin/Code/or-tools-14.4.1/lib/cmake/ZLIB;/Users/allin/Code/or-tools-14.4.1/lib/cmake/absl;/Users/allin/Code/or-tools-14.4.1/lib/cmake/ortools;/Users/allin/Code/or-tools-14.4.1/lib/cmake/protobuf;/Users/allin/Code/or-tools-14.4.1/lib/cmake/re2;/Users/allin/Code/or-tools-14.4.1/lib/cmake/scip;/Users/allin/Code/or-tools-14.4.1/lib/cmake/utf8_range;/opt/homebrew/opt/abseil/lib/cmake/absl",
+                "CMAKE_PREFIX_PATH": "",
                 "CMAKE_TOOLCHAIN_FILE": "",
                 "CMAKE_INSTALL_PREFIX": "${sourceDir}/install/${presetName}"
             }

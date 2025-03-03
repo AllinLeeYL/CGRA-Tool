@@ -2,9 +2,14 @@
 .zed/
 .ref/
 .idea/
+
+# developing folder
 build/
 scripts/
 install/
+
+# intermediate files
+*.dot
 
 # Prerequisites
 *.d

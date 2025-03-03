@@ -201,7 +201,7 @@ bool Mapping::isLegal() {
         if (edge.isAnti) {
             MRRGNode next_des = *des;
             next_des.T += this->mrrg.II;
-            des = this->mrrg[next_des];
+            des = this->mrrg.getNodeByDetial(des->type, des->pe, des->T+this->mrrg.II);
             assert(des != *this->mrrg.nodes.end());
         } 
         std::vector<MRRGRoute> paths = this->mrrg.findPath(src, des);

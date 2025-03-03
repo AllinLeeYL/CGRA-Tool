@@ -14,6 +14,7 @@ enum MRRGNodeType{
 
 class MRRGNode {
 public:
+    int ID;
     MRRGNodeType type;
     int T;
     PE pe;
@@ -23,12 +24,12 @@ public:
 public:
     MRRGNode();
     MRRGNode(const MRRGNode& other);
-    MRRGNode(MRRGNodeType type, PE pe, int T, int mux_allow=0);
+    MRRGNode(int ID, MRRGNodeType type, PE pe, int T, int mux_allow=0);
     bool supportOP(OPCode op);
     std::string getLabel();
     MRRGNode& operator=(const MRRGNode& other);
     bool operator==(const MRRGNode& other) const;
-    void serialize(std::ostream& f,
+    bool serialize(std::ostream& f,
                    bool display_attrs=false,
                    std::string label="") const ;
 };
@@ -121,7 +122,12 @@ public:
      * @return If the node is found, return the pointer to the node, else return NULL.
      */
     MRRGNode* operator[](MRRGNode node);
-    // MRRGNode* operator[](int n);
+
+    /** @brief Look for the node which is equal to node.
+     * 
+     * @return If the node is found, return the pointer to the node, else return NULL.
+     */
+    MRRGNode* getNodeByDetial(MRRGNodeType, PE, int);
 
     MRRG& operator=(const MRRG& other);
     // bool operator==(const MRRG& other);

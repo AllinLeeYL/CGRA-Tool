@@ -81,6 +81,13 @@ int main(int argc, char** argv) {
     ModulePassManager PM;
     PM.run(*M, MAM);
 
+    LOG_INFO<<"Arguments:\n";
+    LOG_INFO<<"\t*row-size: "<<ROW_SIZE<<"\n";
+    LOG_INFO<<"\t*col-size: "<<COL_SIZE<<"\n";
+    LOG_INFO<<"\t*bb: "; 
+    for (StringRef strPair : BasicBlocks) {std::cout<<strPair.str()<<",";}
+    std::cout<<"\n";
+
     /* get map <func:<bb, ...>> */
     std::map<Function*, std::vector<BasicBlock*>> FBMap;
     for (StringRef strPair : BasicBlocks) {
