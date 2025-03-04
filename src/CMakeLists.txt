@@ -3,7 +3,7 @@ add_subdirectory(hardware-modeler)
 add_subdirectory(mapper)
 
 add_executable(cgra-tool
-    CGRAMapper.cpp
+    CGRATool.cpp
 )
 
 target_link_libraries(cgra-tool

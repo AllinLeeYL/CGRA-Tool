@@ -35,7 +35,7 @@
     ],
     "buildPresets": [
         {
-            "name": "build-make",
+            "name": "debug-make",
             "displayName": "Build target with UNIX Makefiles",
             "configurePreset": "debug-make",
             "configuration": "Debug",

@@ -35,6 +35,7 @@ DFG::DFG(std::vector<Loop*>& targetLoops) {
     }
     this->node_counter = 0;
     this->edge_counter = 0;
+    this->cycleIsCalculated = false;
     this->nodes.clear();
     this->edges.clear();
     this->insts.clear();
@@ -56,6 +57,8 @@ DFG::DFG(std::vector<Loop*>& targetLoops) {
 
 DFG::DFG(std::vector<llvm::BasicBlock*>& BBs){
     this->node_counter = 0;
+    this->edge_counter = 0;
+    this->cycleIsCalculated = false;
     this->nodes.clear();
     this->edges.clear();
     this->insts.clear();
@@ -137,10 +140,9 @@ std::vector<DFGEdge> DFG::getEdges(bool visibleOnly) {
 }
 
 int DFG::getRecMII() {
-    // Assign an earliest and latest start cycle to each OPNode
-    this->calculateCycle();
-    // Anti edges
-    std::vector<DFGEdge> tedges;
+    LOG_INFO<<"hello\n";
+    this->calculateCycle(); // Assign an earliest and latest start cycle to each OPNode
+    std::vector<DFGEdge> tedges; // Anti edges
     // Initialize
     for (DFGEdge edge : this->ctrlEdges) {
         tedges.push_back(edge);

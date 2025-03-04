@@ -16,6 +16,7 @@ Mapping ILPMapper::map(int II, int time_limit) {
         if (now - start > time_limit)
             return mapping;
         mapping = this->mapII(ii);
+        break; // delete this after debugging
     }
     return mapping;
 }
@@ -30,35 +31,41 @@ Mapping ILPMapper::mapII(int II, int time_limit) {
     if (!solver) {
         LOG_WARNING<<"Could not create solver GLOP\n";
     }
-    /* FU -- OP Mapping */
+
     std::vector<DFGEdge> dfgEdges = dfg->getEdges();
     for (DFGEdge dfgEdge : dfgEdges) {
-        for (MRRGNode* fu : fus) {
-            std::string name = std::to_string(dfgEdge.ID)+"_"+fu->getLabel();
-            MPVariable* const t = solver->MakeBoolVar(name);
-        }
+
     }
 
-    std::vector<std::vector<MPVariable*>> fuop;
-    for (int i=0; i<fus.size(); i++) {
-        fuop.push_back(std::vector<MPVariable*>());
-        for (int j=0; j<ops.size(); j++) {
-            std::string name = "fuop"+std::to_string(i)+std::to_string(j);
-            MPVariable* const t = solver->MakeBoolVar(name);
-            fuop[i].push_back(t);
-        }
-    }
+    /* FU -- OP Mapping */
+    // std::vector<DFGEdge> dfgEdges = dfg->getEdges();
+    // for (DFGEdge dfgEdge : dfgEdges) {
+    //     for (MRRGNode* fu : fus) {
+    //         std::string name = std::to_string(dfgEdge.ID)+"_"+fu->getLabel();
+    //         MPVariable* const t = solver->MakeBoolVar(name);
+    //     }
+    // }
 
-    /* FU -- OP Route Resource Mapping*/
-    std::vector<std::vector<MPVariable*>> Rfuop;
-    for (int i=0; i<fus.size(); i++) {
-        fuop.push_back(std::vector<MPVariable*>());
-        for (int j=0; j<ops.size(); j++) {
-            std::string name = "Rfuop"+std::to_string(i)+std::to_string(j);
-            MPVariable* const t = solver->MakeBoolVar(name);
-            fuop[i].push_back(t);
-        }
-    }
+    // std::vector<std::vector<MPVariable*>> fuop;
+    // for (int i=0; i<fus.size(); i++) {
+    //     fuop.push_back(std::vector<MPVariable*>());
+    //     for (int j=0; j<ops.size(); j++) {
+    //         std::string name = "fuop"+std::to_string(i)+std::to_string(j);
+    //         MPVariable* const t = solver->MakeBoolVar(name);
+    //         fuop[i].push_back(t);
+    //     }
+    // }
+
+    // /* FU -- OP Route Resource Mapping*/
+    // std::vector<std::vector<MPVariable*>> Rfuop;
+    // for (int i=0; i<fus.size(); i++) {
+    //     fuop.push_back(std::vector<MPVariable*>());
+    //     for (int j=0; j<ops.size(); j++) {
+    //         std::string name = "Rfuop"+std::to_string(i)+std::to_string(j);
+    //         MPVariable* const t = solver->MakeBoolVar(name);
+    //         fuop[i].push_back(t);
+    //     }
+    // }
 
     LOG_INFO<<"Number of variables = "<<solver->NumVariables()<<"\n";
     /* Constrains: Every OP is placed on exactly one FU. */

@@ -175,8 +175,10 @@ int main(int argc, char** argv) {
         /* Construct the DFG, the CGRA, and the mapper. */
         cgratool::DFG dfg(loop);
         cgratool::CGRA cgra(ROW_SIZE, COL_SIZE);
-        // cgratool::ILPMapper mapper(&dfg, cgra);
-        cgratool::ExhaustiveMapper mapper(&dfg, cgra);
+
+        /* Choose a mapper */
+        cgratool::ILPMapper mapper(&dfg, cgra);
+        // cgratool::ExhaustiveMapper mapper(&dfg, cgra);
         // HeuristicMapper mapper(&dfg, &cgra);
 
         int RecMII = mapper.getRecMII();
