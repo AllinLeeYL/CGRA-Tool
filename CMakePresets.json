@@ -36,10 +36,11 @@
     "buildPresets": [
         {
             "name": "debug-make",
-            "displayName": "Build target with UNIX Makefiles",
+            "displayName": "Build debuggable target with UNIX Makefiles",
             "configurePreset": "debug-make",
             "configuration": "Debug",
-            "targets": "all"
+            "targets": "all",
+            "jobs": 8
         }
     ],
     "testPresets": [

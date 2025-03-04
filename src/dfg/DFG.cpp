@@ -80,7 +80,10 @@ DFG::DFG(std::vector<llvm::BasicBlock*>& BBs){
 
 void DFG::parseCtrlEdge() {
     Instruction* terminalInst = this->insts.back(); // TODO: This may lead to some bugs.
-    assert(isTerminalInst(terminalInst));
+    if (!isTerminalInst(terminalInst)) {
+        LOG_WARNING<<"basic block doens not end with terminal instruction may cause unexpected behavior!\n";
+        outs()<<"\tThe culprit is "<<*terminalInst<<"\n";
+    }
 
     std::vector<Instruction*> PHIs;
     for (Instruction* inst: this->insts) {
@@ -121,6 +124,15 @@ std::vector<DFGNode*> DFG::getOps() {
     std::vector<DFGNode*> ops;
     for (DFGNode* node : this->nodes) {
         if (node->isOp())
+            ops.push_back(node);
+    }
+    return ops;
+}
+
+std::vector<DFGNode*> DFG::getOpsOfLatestCycle(int T) {
+    std::vector<DFGNode*> ops;
+    for (DFGNode* node : this->nodes) {
+        if (node->isOp() && node->latestCycle==T)
             ops.push_back(node);
     }
     return ops;

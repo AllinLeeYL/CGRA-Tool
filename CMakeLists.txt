@@ -12,7 +12,7 @@ project(CGRA-Tool
 # whether to compile LLVM pass plugin (default: OFF)
 set (BUILD_LLVM_PASSES OFF)
 set (CMAKE_CXX_STANDARD 20)
-set (BUILD_SHARED_LIBS ON)
+set (BUILD_SHARED_LIBS OFF)
 # set(CMAKE_MACOSX_RPATH 0)
 # set(CMAKE_CXX_FLAGS_DEBUG "-O2")
 # set(CMAKE_CXX_FLAGS_RELEASE "-O3")
@@ -58,7 +58,8 @@ set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib:${CMAKE_INSTALL_PREFIX}/lib
 
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/src)
 
-install(TARGETS cgra-tool hardware-modeler dfg mapper)
+install(TARGETS cgra-tool)
+# install(TARGETS cgra-tool hardware-modeler dfg mapper)
 # install(FILES 
 #     ${ORTOOLS_INCLUDE_DIRS}/../lib/libortools.9.dylib
 #     ${ORTOOLS_INCLUDE_DIRS}/../lib/libortools.9.10.dylib

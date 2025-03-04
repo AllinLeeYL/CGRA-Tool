@@ -122,6 +122,7 @@ public:
     void generateDot(std::ofstream& f, bool show_more=false);
     int getOpCount();
     std::vector<DFGNode*> getOps();
+    std::vector<DFGNode*> getOpsOfLatestCycle(int);
     std::vector<DFGEdge> getEdges(bool visibleOnly=true);
 
     /** This function calculates the cycle of each OPNode and assign them 

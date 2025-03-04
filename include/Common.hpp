@@ -22,6 +22,7 @@ enum OPCode {
 
 #define LOG_INFO std::cout<<rang::fg::cyan<<"[INFO] "<<rang::fg::reset
 #define LOG_WARNING std::cout<<rang::fg::yellow<<"[WARNING] "<<rang::fg::reset
+#define LOG_IDT std::cout<<"  "
 
 }
 #endif

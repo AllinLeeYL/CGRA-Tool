@@ -167,7 +167,11 @@ int main(int argc, char** argv) {
             errs()<<"bb";
             for (BasicBlock* bb : bbs)
                 errs()<<*bb;
-            errs()<<"don't belong to any loop\n";
+            errs()<<"don't belong to any loop. Treating them as loops may causing unexpected behavios.\n";
+            std::vector<BasicBlock*> dangerousLoop;
+            for (BasicBlock* bb : bbs)
+                dangerousLoop.push_back(bb);
+            loops.push_back(dangerousLoop);
         }
     }
 
@@ -201,7 +205,8 @@ int main(int argc, char** argv) {
         fverilog.close();
 
         time_t start = time(NULL);
-        cgratool::Mapping mapping = mapper.map(MII);
+        // cgratool::Mapping mapping = mapper.map(MII);
+        cgratool::Mapping mapping = mapper.map(MII-1); //! restore to original after debugging dummy
         time_t end = time(NULL);
 
         if (mapping.isNull())
