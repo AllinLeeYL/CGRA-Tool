@@ -25,6 +25,7 @@ DFGNode::DFGNode(int ID, NodeType nodeType, Instruction* inst, OPCode opCode, Da
     this->inst = inst;
     this->earliestCycle = -1;
     this->latestCycle = -1;
+    this->cycle = -1;
     if (nodeType == CallNode) {
         Function* func = ((CallInst*)inst)->getCalledFunction();
         llvm::StringRef funcName = func->getName();
@@ -63,7 +64,7 @@ void DFGNode::serialize(std::ostream& f, bool debug) const {
         return;
     
     // if (this->earliestCycle != -1 && this->latestCycle != -1) {
-        f << " [earliestCycle=" << this->earliestCycle << ", latestCycle=" << this->latestCycle << "]";
+        f << " [cycle="<<this->cycle<<", earliestCycle=" << this->earliestCycle << ", latestCycle=" << this->latestCycle << "]";
     // }
 }
 
@@ -81,6 +82,7 @@ DFGNode& DFGNode::operator=(const DFGNode& other) {
     this->floatVal = other.floatVal;
     this->earliestCycle = other.earliestCycle;
     this->latestCycle = other.latestCycle;
+    this->cycle = other.cycle;
     return *this;
 }
 
@@ -94,7 +96,8 @@ bool DFGNode::operator==(const DFGNode& other) {
            this->intVal == other.intVal &&
            this->floatVal == other.floatVal &&
            this->earliestCycle == other.earliestCycle &&
-           this->latestCycle == other.latestCycle;
+           this->latestCycle == other.latestCycle &&
+           this->cycle == other.cycle;
 }
 
 bool DFGNode::operator!=(const DFGNode& other) {

@@ -124,13 +124,23 @@ public:
     int getOpCount();
     std::vector<DFGNode*> getOps();
 
-    /** @brief This function will retrieve OPs of which T=T from the DFG.
+    /** @brief This function will retrieve OPs of which T0 <= cycle < T1
+     *
+     *  @return The returned vector will remain the same order whenever it's called
+     */
+    std::vector<DFGNode*> getOpsOfCycle(int);
+    /** @brief This function will retrieve OPs of which T0 <= cycle < T1
+     *
+     *  @return The returned vector will remain the same order whenever it's called
+     */
+    std::vector<DFGNode*> getOpsOfCycle(int T0, int T1);
+
+    /** @brief This function will retrieve OPs of which latestCycle=T from the DFG.
      *
      *  @return The returned vector will remain the same order whenever it's called
      */
     std::vector<DFGNode*> getOpsOfLatestCycle(int);
-
-    /** @brief This function will retrieve OPs of which T0 <= T < T1
+    /** @brief This function will retrieve OPs of which T0 <= latestCycle < T1
      *
      *  @return The returned vector will remain the same order whenever it's called
      */

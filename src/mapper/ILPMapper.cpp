@@ -88,7 +88,7 @@ Mapping ILPMapper::mapII(int II, int time_limit) {
     }
 
     { /* VARIABLE: mappable place for root node */
-        std::vector<DFGNode *> rootNodes = dfg->getOpsOfLatestCycle(0);
+        std::vector<DFGNode *> rootNodes = dfg->getOpsOfCycle(0);
         for (DFGNode* node : rootNodes) {
             std::vector<MPVariable*> vec;
             for (MRRGNode* fu : mrrg.getFUsOfT(0)) {
@@ -106,14 +106,14 @@ Mapping ILPMapper::mapII(int II, int time_limit) {
     }
 
     { /* VARIABLE: mappable place for non-root node */
-        std::vector<DFGNode*> nodes = dfg->getOpsOfLatestCycle(1, II);
+        std::vector<DFGNode*> nodes = dfg->getOpsOfCycle(1, II);
         for (DFGNode* node : nodes) {
             for (DFGEdge ie : dfg->getEdgesTo(node)) {
                 if (ie.isAnti)
                     continue;
-                for (int i=0; ie.src->latestCycle+i < node->latestCycle; i++) {
+                for (int i=0; ie.src->cycle+i < node->cycle; i++) {
                     std::vector<MPVariable*> vec;
-                    std::vector<MRRGEdge*> mrrgEdges = mrrg.getEdgesOfT(ie.src->latestCycle+i, ie.src->latestCycle+i+1);
+                    std::vector<MRRGEdge*> mrrgEdges = mrrg.getEdgesOfT(ie.src->cycle+i, ie.src->cycle+i+1);
                     for (MRRGEdge* me : mrrgEdges) {
                         std::string dfgName = std::to_string(ie.src->ID)+"-"+std::to_string(ie.des->ID);
                         std::string mrrgName = std::to_string(me->src->ID)+"-"+std::to_string(me->des->ID);
@@ -174,13 +174,13 @@ Mapping ILPMapper::mapII(int II, int time_limit) {
     }
 
     /* CONSTRAINT: Continuation */
-    for (DFGNode* d : dfg->getOpsOfLatestCycle(0, mrrg.II-1)) {
+    for (DFGNode* d : dfg->getOpsOfCycle(0, mrrg.II-1)) {
         for (DFGEdge oe : dfg->getEdgesFrom(d)) {
             if (oe.isAnti)
                 continue;
-            for (int i=0; d->latestCycle+i<oe.des->latestCycle; i++) {
+            for (int i=0; d->cycle+i<oe.des->cycle; i++) {
                 // ? [ ]1. a-c cross multiple cycle;
-                for (MRRGNode* m : mrrg.getFUsOfT(d->latestCycle+i)) {
+                for (MRRGNode* m : mrrg.getFUsOfT(d->cycle+i)) {
                     std::vector<MPVariable*> vec1 = getMPVarOfWhich(solver->variables(), "", std::to_string(d->ID), "", std::to_string(m->ID));
                     std::vector<MPVariable*> vec2 = getMPVarOfWhich(solver->variables(), std::to_string(d->ID), std::to_string(oe.des->ID), std::to_string(m->ID), "");
                     for (MPVariable* v1 : vec1) {
@@ -199,7 +199,7 @@ Mapping ILPMapper::mapII(int II, int time_limit) {
 
     /* CONSTRAINT: DFG b->c and DFG a->c Mapped to the same place on MRRG */
     for (MRRGNode * m : mrrg.getFUsOfT(0, mrrg.II)) {
-        for (DFGNode* d : dfg->getOpsOfLatestCycle(m->T)) {
+        for (DFGNode* d : dfg->getOpsOfCycle(m->T)) {
             std::vector<DFGEdge> vec = dfg->getEdgesTo(d);
             for (int i=1; i<vec.size(); i++) {
                 DFGNode* ds = vec[i-1].src;
