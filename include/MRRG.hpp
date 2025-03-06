@@ -117,6 +117,12 @@ public:
      */
     MRRGEdge* getEdge(MRRGNode* src, MRRGNode* des) const;
 
+    /** @brief This function try getting the all edges from nodes at T0 to nodes at T1.
+     *
+     *  @return Return the edges on success, otherwise return a empty vector.
+     */
+    std::vector<MRRGEdge*> getEdgesOfT(int T0, int T1);
+
     /** @brief Look for the node which is equal to node.
      * 
      * @return If the node is found, return the pointer to the node, else return NULL.

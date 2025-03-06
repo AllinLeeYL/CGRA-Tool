@@ -120,7 +120,9 @@ namespace cgratool
     class ILPMapper : public Mapper
     {
     public:
-        ILPMapper(DFG *dfg, CGRA cgra);
+        std::string solverName;
+    public:
+        ILPMapper(DFG *dfg, CGRA cgra, std::string solver="CP-SAT");
 
         /** @brief Try mapping the DFG onto the CGRA.
          *

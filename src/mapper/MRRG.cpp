@@ -54,11 +54,11 @@ bool MRRGNode::serialize(std::ostream& f, bool display_attrs, std::string label)
     // llvm::raw_ostream name;
     std::ostringstream name;
     if (this->type == FUNode) {
-        name<<"FU"<<this->pe.ID<<"_T"<<this->T;
+        name<<"FU"<<this->pe.ID<<"_"<<this->ID;
     } else if (this->type == RegNode) {
-        name<<"Reg"<<this->pe.ID<<"_T"<<this->T;
+        name<<"Reg"<<this->pe.ID<<"_"<<this->ID;
     } else if (this->type == MuxNode) {
-        name<<"Mux"<<this->pe.ID<<"_T"<<this->T;
+        name<<"Mux"<<this->pe.ID<<"_"<<this->ID;
     } else {
         std::cout<<fg::red<<"wrong <MRRGNode> Type!"<<this->type<<"\n"<<fg::reset;
         return false;
@@ -134,6 +134,24 @@ std::vector<MRRGNode*> MRRG::getFUsOfT(int T0, int T1) {
             FUs.push_back(node);
     }
     return FUs;
+}
+
+MRRGEdge* MRRG::getEdge(MRRGNode* src, MRRGNode* des) const {
+    for (MRRGEdge* edge : this->edges) {
+        if (edge->src == src && edge->des == des)
+            return edge;
+    }
+    return NULL;
+}
+
+std::vector<MRRGEdge*> MRRG::getEdgesOfT(int T0, int T1) {
+    std::vector<MRRGEdge*> vec;
+    for (MRRGEdge* e : this->edges) {
+        if (e->src->T == T0 && e->des->T == T1) {
+            vec.push_back(e);
+        }
+    }
+    return vec;
 }
 
 std::vector<MRRGRoute> MRRG::planRoute(MRRGNode* src, MRRGNode* des) {
@@ -279,14 +297,6 @@ MRRGNode* MRRG::getNodeByDetial(MRRGNodeType type, PE pe, int t) {
     MRRGNode tmpNode(-1, type, pe, t);
     tmpNode.serialize(std::cout);
     std::cout<<"\n";
-    return NULL;
-}
-
-MRRGEdge* MRRG::getEdge(MRRGNode* src, MRRGNode* des) const {
-    for (MRRGEdge* edge : this->edges) {
-        if (edge->src == src && edge->des == des)
-            return edge;
-    }
     return NULL;
 }
 

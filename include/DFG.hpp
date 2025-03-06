@@ -44,6 +44,7 @@ public:
     float floatVal;
     int earliestCycle;
     int latestCycle;
+    int cycle;
     
 public:
     DFGNode();
@@ -122,11 +123,26 @@ public:
     void generateDot(std::ofstream& f, bool show_more=false);
     int getOpCount();
     std::vector<DFGNode*> getOps();
+
+    /** @brief This function will retrieve OPs of which T=T from the DFG.
+     *
+     *  @return The returned vector will remain the same order whenever it's called
+     */
     std::vector<DFGNode*> getOpsOfLatestCycle(int);
+
+    /** @brief This function will retrieve OPs of which T0 <= T < T1
+     *
+     *  @return The returned vector will remain the same order whenever it's called
+     */
+    std::vector<DFGNode*> getOpsOfLatestCycle(int T0, int T1);
     std::vector<DFGEdge> getEdges(bool visibleOnly=true);
 
-    /** This function calculates the cycle of each OPNode and assign them 
-     *  two properties: earestCycle and latestCycle */
+    std::vector<DFGEdge> getEdgesTo(DFGNode*, bool visibleOnly=true);
+    std::vector<DFGEdge> getEdgesFrom(DFGNode*, bool visibleOnly=true);
+
+    std::vector<std::vector<DFGNode*>> topologySortedNodes(bool r=false);
+    /** @brief This function calculates the cycle of each OPNode and assign them 
+     *  three properties: earestCycle, latestCycle, and cycle */
     void calculateCycle();
     int getRecMII();
     DFGNode& operator[](int ID);

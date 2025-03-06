@@ -31,6 +31,18 @@ static cl::opt<std::string> InputFilename(cl::Positional,
                                           cl::init(""),
                                           cl::value_desc("filename"));
 
+static cl::list<std::string> BasicBlocks (
+    "bb",
+    cl::desc("Specify <function, basic block1[;basic block2...]> pairs to accelerate.\n"
+                   "If an unnamed basic block is to be accelerated,\n"
+                   "'%' should be added before the basic block variable names.\n"
+                   "eg:\n"
+                   "  --bb=f:bb1;bb2 will extract one function with bb1 and bb2;\n"
+                   "  --bb=f:%1 will extract one function with unnamed bb 1;\n"),
+    cl::value_desc("function:bb1[;bb2...]"),
+    cl::cat(CGRACat)
+);
+/* optional parameters */
 static cl::opt<unsigned> ROW_SIZE (
     "cgra-row-size", cl::init(4), 
     cl::desc("Set the row size of the PE array of CGRA."),
@@ -43,15 +55,9 @@ static cl::opt<unsigned> COL_SIZE (
     cl::cat(CGRACat)
 );
 
-static cl::list<std::string> BasicBlocks (
-    "bb",
-    cl::desc("Specify <function, basic block1[;basic block2...]> pairs to accelerate.\n"
-                   "If an unnamed basic block is to be accelerated,\n"
-                   "'%' should be added before the basic block variable names.\n"
-                   "eg:\n"
-                   "  --bb=f:bb1;bb2 will extract one function with bb1 and bb2;\n"
-                   "  --bb=f:%1 will extract one function with unnamed bb 1;\n"),
-    cl::value_desc("function:bb1[;bb2...]"),
+static cl::opt<std::string> ILPSolver (
+    "ilp-solver", cl::init("CP-SAT"), 
+    cl::desc("Available solvers: <CP-SAT|SCIP>"),
     cl::cat(CGRACat)
 );
 
@@ -181,7 +187,7 @@ int main(int argc, char** argv) {
         cgratool::CGRA cgra(ROW_SIZE, COL_SIZE);
 
         /* Choose a mapper */
-        cgratool::ILPMapper mapper(&dfg, cgra);
+        cgratool::ILPMapper mapper(&dfg, cgra, ILPSolver);
         // cgratool::ExhaustiveMapper mapper(&dfg, cgra);
         // HeuristicMapper mapper(&dfg, &cgra);
 
@@ -206,7 +212,7 @@ int main(int argc, char** argv) {
 
         time_t start = time(NULL);
         // cgratool::Mapping mapping = mapper.map(MII);
-        cgratool::Mapping mapping = mapper.map(MII-1); //! restore to original after debugging dummy
+        cgratool::Mapping mapping = mapper.map(MII); //! restore to original after debugging dummy
         time_t end = time(NULL);
 
         if (mapping.isNull())
