@@ -281,83 +281,16 @@ void DFG::calculateCycle() {
     if (this->cycleIsCalculated)
         return;
     // assign property: earliest cycle and latest cycle
-    bool reversed[2] = {false, true};
-    for (int i=0; i<2; i++) {
-        bool r = reversed[i];
-        std::vector<DFGNode*> visited;
-        std::vector<DFGNode*> notVstd;
-        std::vector<DFGEdge> tedges;
-        // initialize
-        for (DFGNode* node : this->nodes) {
-            if (node->isOp()) 
-                notVstd.push_back(node);
-        }
-        for (DFGEdge edge : this->edges) {
-            if (edge.isVisible() && !edge.isAnti)
-                tedges.push_back(edge);
-        }
-        int cycle;
-        for (cycle=0; !notVstd.empty(); cycle++) {
-            std::vector<DFGNode*> tnodes; // Store the nodes whose in-degree is 0.
-            tnodes.clear();
-            // Get nodes whose in-degree is zero.
-            for (DFGNode* node : notVstd) {
-                bool degree0 = true;
-                for (DFGEdge edge : tedges) {
-                    if (edge.des == node && r==false) {
-                        degree0 = false;
-                        break;
-                    } else if (edge.src == node && r==true) {
-                        degree0 = false;
-                        break;
-                    }
-                }
-                if (degree0)
-                    tnodes.push_back(node);
-            }
-            // Delete from not visited and add to visited.
-            for (DFGNode* node : tnodes) {
-                auto idx = std::find(notVstd.begin(), notVstd.end(), node);
-                notVstd.erase(idx);
-                visited.push_back(node);
-            }
-            // Delete the edge pointed from/to this node. TODO: there might be bugs. [*] FIXED
-            for (DFGNode* node : tnodes) {
-                while (true) {
-                    bool found_edge = false;
-                    for (DFGEdge edge : tedges) {
-                        if (edge.src==node && r==false) {
-                            auto idx = std::find(tedges.begin(), tedges.end(), edge);
-                            tedges.erase(idx);
-                            found_edge = true;
-                            break;
-                        } else if (edge.des==node && r==true) {
-                            auto idx = std::find(tedges.begin(), tedges.end(), edge);
-                            tedges.erase(idx);
-                            found_edge = true;
-                            break;
-                        }
-                    }
-                    if (!found_edge)
-                        break;
-                }
-            }
-            /* If not reversed, assign the cycle for it.
-               Else, assign a temporary cycle (negative). */
-            for (DFGNode* node : tnodes) {
-                if (r == false)
-                    node->earliestCycle = cycle;
-                else
-                    node->latestCycle = cycle;
-            }
-        }
-
-        if (r==true) {
-            for (DFGNode* node : visited) {
-                node->latestCycle = cycle - node->latestCycle - 1;
-            }
-        }
-    }
+    std::vector<std::vector<DFGNode*>> sortedNodes = this->topologySortedNodes();
+    int cycle;
+    for (cycle=0; cycle<sortedNodes.size(); cycle++)
+        for (DFGNode* n : sortedNodes[cycle])
+            n->earliestCycle = cycle;
+    cycle = cycle - 1;
+    sortedNodes = this->topologySortedNodes(true);
+    for (int i=0; i<sortedNodes.size(); i++)
+        for (DFGNode* n : sortedNodes[i])
+            n->latestCycle = cycle - i;
     // assign property: cycle
     
     this->cycleIsCalculated = true;
