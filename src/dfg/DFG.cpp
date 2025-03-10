@@ -58,7 +58,7 @@ DFG::DFG(std::vector<Loop*>& targetLoops) {
     }
     // phi node and br node (control edge)
     this->parseCtrlEdge();
-    // insert fake node S->0
+    // insert fake node R->0
     for (DFGNode* op : this->getOps()) {
         if (this->getEdgesTo(op).size() == 0)
             this->addEdge(rootnode, op);
@@ -89,7 +89,7 @@ DFG::DFG(std::vector<llvm::BasicBlock*>& BBs){
     }
     // phi node and br node (control edge)
     this->parseCtrlEdge();
-    // insert fake node S->0
+    // insert fake node R->0
     for (DFGNode* op : this->getOps()) {
         if (this->getEdgesTo(op).size() == 0)
             DFGEdge& e = this->addEdge(rootnode, op);
@@ -351,6 +351,10 @@ void DFG::calculateCycle() {
             n->cycle = cycle;
         }
     }
+    for (std::vector<DFGNode*> vec : rsortedNodes) 
+        for (DFGNode* n : vec) 
+            for (DFGEdge e : this->getEdgesTo(n)) 
+                e.src->cycle = e.src->cycle+1 != e.des->cycle ? e.des->cycle-1 : e.src->cycle;
     this->cycleIsCalculated = true;
 }
 
