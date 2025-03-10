@@ -39,7 +39,7 @@ public:
     MRRGNode*& operator[](DFGNode* dfgnode);
     const DFGNode* operator[](MRRGNode* mrrgnode);
     void clear();
-    /** @brief Output a graph in the format of pure text. */
+    /** @brief TODO: Output a graph in the format of pure text. */
     void serialize(std::ostream& f);
     /** @brief Output a graphviz (.dot) graph to the ostream. */
     void generateDot(std::ostream& f);

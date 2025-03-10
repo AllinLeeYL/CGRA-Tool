@@ -52,6 +52,22 @@ inline std::vector<MPVariable*> getMPVarOfWhich(std::vector<MPVariable*> vars,
     return vec;
 }
 
+inline std::tuple<int, int> getDFGNodeAndMRRGNodeFromMPVar(MPVariable* v) {
+    std::vector<std::string> ss = split(v->name(), ":");
+    auto [ld, lm] = std::tuple<std::string, std::string>(ss[0], ss[1]);
+    std::vector<std::string> s0 = split(ld, "-");
+    std::vector<std::string> s1 = split(lm, "-");
+    auto [lds, ldd] = std::tuple<std::string, std::string>(s0[0], s0[1]);
+    auto [lms, lmd] = std::tuple<std::string, std::string>(s1[0], s1[1]);
+    assert(ss.size() == 2);
+    assert(s0.size() == 2);
+    assert(s1.size() == 2);
+    return std::tuple<int, int>(std::stoi(ldd), std::stoi(lmd));
+    // return std::tuple<std::tuple<int, int>, std::tuple<int, int>>(
+    //                   std::tuple<int, int>(std::stoi(lds), std::stoi(ldd)), 
+    //                   std::tuple<int, int>(std::stoi(lms), std::stoi(lmd)));
+}
+
 /* class functions */
 
 ILPMapper::ILPMapper(DFG* dfg, CGRA cgra, std::string solver) : Mapper(dfg, cgra) { 
@@ -255,5 +271,14 @@ Mapping ILPMapper::mapII(int II, int time_limit) {
     for (MPVariable* var : solver->variables()) {
         LOG_IDT<<var->name()<<" = " <<var->solution_value()<<"\n";
     }
-    return Mapping();
+
+    /* Construct Mapping */
+    for (MPVariable* var : solver->variables()) {
+        if (var->solution_value() != 1)
+            continue;
+        auto [d, m] = getDFGNodeAndMRRGNodeFromMPVar(var);
+        mapping[&((*dfg)[d])] = mrrg[m];
+    }
+
+    return mapping;
 }

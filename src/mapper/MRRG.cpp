@@ -285,6 +285,15 @@ MRRGNode* MRRG::operator[](MRRGNode node) {
     return NULL;
 }
 
+MRRGNode* MRRG::operator[](int ID) {
+    for (MRRGNode* n : this->nodes) {
+        if (n->ID == ID)
+            return n;
+    }
+    LOG_WARNING<<"no such node with ID: "<<ID<<"\n";
+    return NULL;
+}
+
 MRRGNode* MRRG::getNodeByDetial(MRRGNodeType type, PE pe, int t) {
     if (t > this->TT) {
         this->extendGraphUntil(t);

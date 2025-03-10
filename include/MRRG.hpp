@@ -129,6 +129,12 @@ public:
      */
     MRRGNode* operator[](MRRGNode node);
 
+    /** @brief Look for the node whose ID=ID.
+     * 
+     * @return If the node is found, return the pointer to the node, else return NULL.
+     */
+    MRRGNode* operator[](int ID);
+
     /** @brief Look for the node which is equal to node.
      * 
      * @return If the node is found, return the pointer to the node, else return NULL.
