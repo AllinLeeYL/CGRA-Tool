@@ -23,6 +23,8 @@ bool isTerminalInst(Instruction* inst) {
 }
 
 DFG::DFG() {
+    // root node
+    DFGNode* rootnode = new DFGNode(-1, NULLNode);
     this->cycleIsCalculated = false;
 }
 
@@ -39,6 +41,9 @@ DFG::DFG(std::vector<Loop*>& targetLoops) {
     this->nodes.clear();
     this->edges.clear();
     this->insts.clear();
+    // root node
+    DFGNode* rootnode = new DFGNode(-1, NULLNode);
+    this->nodes.push_back(rootnode);
     // extract instructions to this->insts
     for(BasicBlock* bb: BBs) {
         outs()<<"bb "<<bb->getName().str()<<":\n";
@@ -53,6 +58,11 @@ DFG::DFG(std::vector<Loop*>& targetLoops) {
     }
     // phi node and br node (control edge)
     this->parseCtrlEdge();
+    // insert fake node S->0
+    for (DFGNode* op : this->getOps()) {
+        if (this->getEdgesTo(op).size() == 0)
+            this->addEdge(rootnode, op);
+    }
 }
 
 DFG::DFG(std::vector<llvm::BasicBlock*>& BBs){
@@ -62,6 +72,9 @@ DFG::DFG(std::vector<llvm::BasicBlock*>& BBs){
     this->nodes.clear();
     this->edges.clear();
     this->insts.clear();
+    // root node
+    DFGNode* rootnode = new DFGNode(-1, NULLNode);
+    this->nodes.push_back(rootnode);
     // extract instructions to this->insts
     for(BasicBlock* bb: BBs) {
         outs()<<"bb "<<bb->getName().str()<<":\n";
@@ -76,6 +89,11 @@ DFG::DFG(std::vector<llvm::BasicBlock*>& BBs){
     }
     // phi node and br node (control edge)
     this->parseCtrlEdge();
+    // insert fake node S->0
+    for (DFGNode* op : this->getOps()) {
+        if (this->getEdgesTo(op).size() == 0)
+            DFGEdge& e = this->addEdge(rootnode, op);
+    }
 }
 
 void DFG::parseCtrlEdge() {
@@ -168,15 +186,19 @@ std::vector<DFGEdge> DFG::getEdges(bool visibleOnly) {
     return edges;
 }
 
-std::vector<DFGEdge> DFG::getEdgesTo(DFGNode* node, bool visibleOnly) {
+std::vector<DFGEdge> DFG::getEdgesTo(DFGNode* node, bool visibleOnly, bool noAnti) {
     std::vector<DFGEdge> edges;
     for (DFGEdge edge : this->edges) {
         if (!edge.isVisible() && visibleOnly)
+            continue;
+        if (edge.isAnti && noAnti)
             continue;
         if (edge.des != node)
             continue;
         edges.push_back(edge);
     }
+    if (noAnti)
+        return edges;
     for (DFGEdge edge : this->ctrlEdges) {
         if (edge.des != node)
             continue;
@@ -185,21 +207,34 @@ std::vector<DFGEdge> DFG::getEdgesTo(DFGNode* node, bool visibleOnly) {
     return edges;
 }
 
-std::vector<DFGEdge> DFG::getEdgesFrom(DFGNode* node, bool visibleOnly) {
+std::vector<DFGEdge> DFG::getEdgesFrom(DFGNode* node, bool visibleOnly, bool noAnti) {
     std::vector<DFGEdge> edges;
     for (DFGEdge edge : this->edges) {
         if (!edge.isVisible() && visibleOnly)
+            continue;
+        if (edge.isAnti && noAnti)
             continue;
         if (edge.src != node)
             continue;
         edges.push_back(edge);
     }
+    if (noAnti)
+        return edges;
     for (DFGEdge edge : this->ctrlEdges) {
         if (edge.src != node)
             continue;
         edges.push_back(edge);
     }
     return edges;
+}
+
+DFGEdge& DFG::getEdge(int srcID, int desID) {
+    for (DFGEdge& e : this->edges) {
+        if (e.src->ID == srcID && e.des->ID == desID)
+            return e;
+    }
+    LOG_WARNING<<"Could not find edge: "<<srcID<<"->"<<desID<<" in DFG\n";
+    exit(1);
 }
 
 int DFG::getRecMII() {
@@ -657,12 +692,6 @@ DFG::~DFG() {
     for (DFGNode* node : this->nodes) {
         delete node;
     }
-    // for (DFGEdge* edge : this->edges) {
-    //     delete edge;
-    // }
-    // for (DFGEdge* edge : this->ctrlEdges) {
-    //     delete edge;
-    // }
 }
 
 DFGNode& DFG::operator[](int ID) {

@@ -42,7 +42,7 @@ DFGEdge& DFGEdge::operator=(const DFGEdge& other) {
     return *this;
 }
 
-bool DFGEdge::operator==(const DFGEdge& other) {
+bool DFGEdge::operator==(const DFGEdge& other) const {
     return this->ID == other.ID
         && this->src == other.src
         && this->des == other.des
@@ -51,7 +51,7 @@ bool DFGEdge::operator==(const DFGEdge& other) {
         && this->isCtrl == other.isCtrl;
 }
 
-bool DFGEdge::operator!=(const DFGEdge& other) {
+bool DFGEdge::operator!=(const DFGEdge& other) const {
     return !(*this == other);
 }
 

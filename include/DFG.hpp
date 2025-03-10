@@ -78,8 +78,8 @@ public:
     DFGEdge(const DFGEdge& other);
     ~DFGEdge();
     DFGEdge& operator=(const DFGEdge& other);
-    bool operator==(const DFGEdge& other);
-    bool operator!=(const DFGEdge& other);
+    bool operator==(const DFGEdge& other) const;
+    bool operator!=(const DFGEdge& other) const;
     bool operator<(const DFGEdge& other) const;
 };
 
@@ -94,7 +94,6 @@ private:
 
     std::vector<llvm::Instruction*> insts;
 private: /* flags */
-    
     bool cycleIsCalculated;
 protected:
     DFGNode* parseCall(llvm::Instruction* inst);
@@ -147,8 +146,14 @@ public:
     std::vector<DFGNode*> getOpsOfLatestCycle(int T0, int T1);
     std::vector<DFGEdge> getEdges(bool visibleOnly=true);
 
-    std::vector<DFGEdge> getEdgesTo(DFGNode*, bool visibleOnly=true);
-    std::vector<DFGEdge> getEdgesFrom(DFGNode*, bool visibleOnly=true);
+    std::vector<DFGEdge> getEdgesTo(DFGNode*, bool visibleOnly=true, bool noAnti=true);
+    std::vector<DFGEdge> getEdgesFrom(DFGNode*, bool visibleOnly=true, bool noAnti=true);
+    
+    /** @brief This function will get edge whose source with srcID and destination with desID
+     *
+     *  @return DFGEdge&
+     */
+    DFGEdge& getEdge(int srcID, int desID);
 
     std::vector<std::vector<DFGNode*>> topologySortedNodes(bool r=false);
     /** @brief This function calculates the cycle of each OPNode and assign them 

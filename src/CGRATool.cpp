@@ -216,7 +216,7 @@ int main(int argc, char** argv) {
         time_t end = time(NULL);
 
         if (mapping.isNull())
-            std::cout<<fg::yellow<<"[Warning] "<<fg::reset<<"Could not find a legal mapping.\n";
+            LOG_WARNING<<"Could not find a legal mapping.\n";
         else {
             std::cout<<fg::green<<"Congratulations! "<<fg::reset<<"A legal mapping exists.\n";
             std::ofstream fmapping("mapping.dot", std::ios::out);

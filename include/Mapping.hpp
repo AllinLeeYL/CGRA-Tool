@@ -17,7 +17,7 @@ namespace cgratool{
 class Mapping {
 protected:
     std::map<DFGNode*, MRRGNode*> mapping;
-    std::map<DFGEdge, MRRGRoute> route_map;
+    std::map<DFGEdge, std::vector<MRRGEdge>> route_map;
 public:
     DFG* dfg;
     MRRG mrrg;
@@ -36,8 +36,15 @@ public:
     bool isNull();
     Mapping& operator=(const Mapping& other);
     bool operator==(const Mapping& other);
+
+    // Deprecated
     MRRGNode*& operator[](DFGNode* dfgnode);
+
+    // Deprecated
     const DFGNode* operator[](MRRGNode* mrrgnode);
+
+    std::vector<MRRGEdge>& operator[](DFGEdge);
+
     void clear();
     /** @brief TODO: Output a graph in the format of pure text. */
     void serialize(std::ostream& f);

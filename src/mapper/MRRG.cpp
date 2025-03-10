@@ -50,7 +50,7 @@ bool MRRGNode::operator==(const MRRGNode& other) const {
         && this->occupied == other.occupied;
 }
 
-bool MRRGNode::serialize(std::ostream& f, bool display_attrs, std::string label) const {
+bool MRRGNode::serialize(std::ostream& f, bool display_attrs, std::string label, bool emphasise) const {
     // llvm::raw_ostream name;
     std::ostringstream name;
     if (this->type == FUNode) {
@@ -59,7 +59,10 @@ bool MRRGNode::serialize(std::ostream& f, bool display_attrs, std::string label)
         name<<"Reg"<<this->pe.ID<<"_"<<this->ID;
     } else if (this->type == MuxNode) {
         name<<"Mux"<<this->pe.ID<<"_"<<this->ID;
-    } else {
+    } else if (this->type == ROOTNode) {
+        ;
+    }
+    else {
         std::cout<<fg::red<<"wrong <MRRGNode> Type!"<<this->type<<"\n"<<fg::reset;
         return false;
     }
@@ -68,7 +71,7 @@ bool MRRGNode::serialize(std::ostream& f, bool display_attrs, std::string label)
         f<<" [z="<<this->T;
         if (label != "")
             f<<" label=\""<<name.str()<<"\\n"<<label<<"\"";
-        if (this->type == FUNode)
+        if (emphasise)
             f<<" color=red";
         f<<"]";
     }
@@ -77,10 +80,34 @@ bool MRRGNode::serialize(std::ostream& f, bool display_attrs, std::string label)
 
 /* ------------- MRRGEdge ------------- */
 
-MRRGEdge::MRRGEdge(MRRGNode* src, MRRGNode* des) {
+MRRGEdge::MRRGEdge(int ID, MRRGNode* src, MRRGNode* des) {
+    this->ID = ID;
     this->src = src;
     this->des = des;
     this->occupied = false;
+}
+
+MRRGEdge& MRRGEdge::operator=(const MRRGEdge& other) {
+    this->ID = other.ID;
+    this->src = other.src;
+    this->des = other.des;
+    this->occupied = other.occupied;
+    return *this;
+}
+
+bool MRRGEdge::operator==(const MRRGEdge& other) const {
+    return this->ID == other.ID
+        && this->src == other.src
+        && this->des == other.des
+        && this->occupied == other.occupied;
+}
+
+bool MRRGEdge::operator!=(const MRRGEdge& other) const {
+    return !(*this == other);
+}
+
+bool MRRGEdge::operator<(const MRRGEdge& other) const {
+    return this->ID < other.ID;
 }
 
 /* ------------- MRRG ------------- */
@@ -142,6 +169,15 @@ MRRGEdge* MRRG::getEdge(MRRGNode* src, MRRGNode* des) const {
             return edge;
     }
     return NULL;
+}
+
+MRRGEdge& MRRG::getEdge(int srcID, int desID) const {
+    for (MRRGEdge* edge : this->edges) {
+        if (edge->src->ID == srcID && edge->des->ID == desID)
+            return *edge;
+    }
+    LOG_WARNING<<"Could not find edge: "<<srcID<<"->"<<desID<<" in MRRG\n";
+    exit(1);
 }
 
 std::vector<MRRGEdge*> MRRG::getEdgesOfT(int T0, int T1) {
@@ -233,6 +269,8 @@ std::vector<MRRGNode*> MRRG::childrenOf(MRRGNode* node) {
 }
 
 void MRRG::extendGraphUntil(int T) {
+    if (T <= 0) 
+        LOG_WARNING<<"extendGraphUntil(int T): T must be > 0!\n";
     if (T > MAXT) {
         std::cout<<fg::red<<"[ERROR] "<<fg::reset
                  <<"T="<<T<<" exceeds the max supported value "
@@ -240,8 +278,12 @@ void MRRG::extendGraphUntil(int T) {
         exit(1);
     }
     int startT = 0;
-    for (MRRGNode* node : this->nodes) {
+    for (MRRGNode* node : this->nodes) 
         startT = std::max(startT, node->T+1);
+    MRRGNode* rootnode;
+    if (startT == 0) { // create root node
+        rootnode = new MRRGNode(-1, ROOTNode, PE(), -1);
+        this->nodes.push_back(rootnode);
     }
     /* --- nodes and connections within the same T --- */
     for (int t=startT; t<=T; t++) { // every cycle t
@@ -249,12 +291,18 @@ void MRRG::extendGraphUntil(int T) {
             MRRGNode* node = new MRRGNode(this->node_counter++, FUNode, pe, t);
             this->nodes.push_back(node);
             /* --- only when t != 0 --- */
-            if (t == 0)
-                continue;
-            this->edges.push_back(new MRRGEdge(
-                this->getNodeByDetial(FUNode, pe, t-1), // the last fu
-                node
-            ));
+            if (t == 0) {
+                this->edges.push_back(new MRRGEdge(
+                    this->edge_counter++,
+                    rootnode,
+                    node
+                ));
+            } else
+                this->edges.push_back(new MRRGEdge(
+                    this->edge_counter++,
+                    this->getNodeByDetial(FUNode, pe, t-1), // the last fu
+                    node
+                ));
         }
     }
     /* --- connections cross different Ts --- */
@@ -263,6 +311,7 @@ void MRRG::extendGraphUntil(int T) {
             if (t == 0)
                 continue;
             this->edges.push_back(new MRRGEdge(
+                this->edge_counter++,
                 this->getNodeByDetial(FUNode, srcPE, t-1),
                 this->getNodeByDetial(FUNode, desPE, t)
             ));
@@ -314,7 +363,7 @@ void MRRG::generateDot(std::ostream& f) {
     /* --- nodes --- */
     for (int t=0; t<this->II; t++) {
         f<<"    subgraph cluster_T"<<t<<" {\n";
-        f<<"        color=blue;\n";
+        f<<"        color=black;\n";
         f<<"        label=\"T"<<t<<"\";\n";
         for (MRRGNode* node : this->nodes) {
             if (node->T != t)
@@ -328,7 +377,7 @@ void MRRG::generateDot(std::ostream& f) {
     /* --- edges --- */
     for (MRRGEdge* edge : this->edges) {
         // if (edge->src->T >= this->II || edge->des->T >= this->II)
-        if (edge->des->T >= this->II)
+        if (edge->des->T >= this->II || edge->src->T == -1)
             continue;
         f << "    ";
         edge->src->serialize(f);
@@ -367,9 +416,10 @@ MRRG& MRRG::operator=(const MRRG& other) {
         this->nodes.push_back(newNode);
     }
     for (MRRGEdge* edge : other.edges) {
-        MRRGNode* src = (*this)[*edge->src];
-        MRRGNode* des = (*this)[*edge->des];
-        this->edges.push_back(new MRRGEdge(src, des));
+        MRRGEdge* e = new MRRGEdge(*edge);
+        e->src = (*this)[*edge->src];
+        e->des = (*this)[*edge->des];
+        this->edges.push_back(e);
     }
     return *this;
 }

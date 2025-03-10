@@ -37,10 +37,10 @@ Mapping& Mapping::operator=(const Mapping& other) {
         this->mapping[&dfgnode] = mrrgnode;
     }
     this->route_map.clear();
-    for (auto & [e, r] : other.route_map) {
-        this->route_map[e] = MRRGRoute();
-        for (MRRGNode* n : r) {
-            this->route_map[e].push_back(this->mrrg[*n]);
+    for (auto & [e, medges] : other.route_map) {
+        this->route_map[e] = std::vector<MRRGEdge>();
+        for (MRRGEdge me : medges) {
+            this->route_map[e].push_back(this->mrrg.getEdge(me.src->ID, me.des->ID));
         }
     }
     return *this;
@@ -48,20 +48,27 @@ Mapping& Mapping::operator=(const Mapping& other) {
 
 bool Mapping::operator==(const Mapping& other) {
     return this->mapping == other.mapping
+        && this->route_map == other.route_map
         && this->dfg == other.dfg
         && this->mrrg.II == other.mrrg.II;
 }
 
+// TODO: modify implmentation
 MRRGNode*& Mapping::operator[](DFGNode* dfgnode) {
     return this->mapping[dfgnode];
 }
 
 const DFGNode* Mapping::operator[](MRRGNode* mrrgnode) {
-    for (const auto & [d, m] : this->mapping) {
-        if (m == mrrgnode)
-            return d;
+    for (const auto & [d, ms] : this->route_map) {
+        for (MRRGEdge m : ms) 
+            if (m.des == mrrgnode)
+                return d.des;
     }
     return NULL;
+}
+
+std::vector<MRRGEdge>& Mapping::operator[](DFGEdge edge) {
+    return this->route_map[edge];
 }
 
 void Mapping::clear() {
@@ -70,15 +77,15 @@ void Mapping::clear() {
 }
 
 void Mapping::generateDot(std::ostream& f) {
-    int maxT = 0;
-    for (auto & [d, m] : this->mapping) {
-        maxT = std::max(m->T, maxT);
-    }
+    int maxT = this->mrrg.II;
+    // for (auto & [d, m] : this->mapping) {
+    //     maxT = std::max(m->T, maxT);
+    // }
     f << "digraph G {\n";
     /* --- nodes --- */
     for (int t=0; t<maxT; t++) {
         f<<"    subgraph cluster_T"<<t<<" {\n";
-        f<<"        color=blue;\n";
+        f<<"        color=black;\n";
         f<<"        label=\"T"<<t<<"\";\n";
         for (MRRGNode* node : this->mrrg.nodes) {
             if (node->T != t)
@@ -89,38 +96,32 @@ void Mapping::generateDot(std::ostream& f) {
                 dfgnode->serialize(label);
             }
             f << "        ";
-            node->serialize(f, true, label.str());
+            bool emphasise = label.str() != "";
+            node->serialize(f, true, label.str(), emphasise);
             f << ";\n";
         }
         f<<"    }\n";
     }
-    std::set<MRRGEdge*> criticalEdges;
-    for (const auto& [edge, route] : this->route_map) {
-        MRRGNode* last = *(route.begin());
-        for (MRRGNode* node : route) {
-            if (node == last)
-                continue;
-            criticalEdges.insert(this->mrrg.getEdge(last, node));
-            last = node;
+    /* --- used edges --- */
+    std::set<MRRGEdge> usedEdges;
+    f << "    edge [color=\"blue\" style=\"solid\"];\n";
+    for (const auto& [de, mes] : this->route_map) {
+        if (de.src->nodeType == NULLNode)
+            continue;
+        for (MRRGEdge me : mes) {
+            f << "    ";
+            me.src->serialize(f);
+            f << " -> ";
+            me.des->serialize(f);
+            f << ";\n";
+            usedEdges.insert(me);
         }
     }
-    /* --- used edges --- */
-    f << "    edge [color=\"blue\"];\n";
-    for (MRRGEdge* edge : this->mrrg.edges) {
-        if (edge->des->T >= maxT)
-            continue;
-        if (criticalEdges.count(edge) == 0)
-            continue;
-        f << "    ";
-        edge->src->serialize(f);
-        f << " -> ";
-        edge->des->serialize(f);
-        f << ";\n";
-    }
-    /* --- edges --- */
+    
+    /* --- ununsed edges --- */
     f << "    edge [color=\"black\" style=\"dotted\"];\n";
     for (MRRGEdge* edge : this->mrrg.edges) {
-        if (edge->des->T >= maxT || criticalEdges.count(edge)==1)
+        if (edge->des->T >= maxT || usedEdges.count(*edge)==1 || edge->src->T == -1)
             continue;
         f << "    ";
         edge->src->serialize(f);
@@ -207,17 +208,6 @@ bool Mapping::isLegal() {
         std::vector<MRRGRoute> paths = this->mrrg.findPath(src, des);
         if (paths.size() == 0)
             return false;
-        // src->serialize(std::cout);
-        // std::cout<<"->";
-        // des->serialize(std::cout);
-        // std::cout<<":\n";
-        // for (MRRGRoute route : paths) {
-        //     for (MRRGNode* cur : route) {
-        //         cur->serialize(std::cout);
-        //         std::cout<<"->";
-        //     }
-        //     std::cout<<"\n";
-        // }
         path_pairs.push_back(RoutePair(edge, paths));
     }
     // 4. Sort the pairs in order of route numbers
@@ -230,10 +220,8 @@ bool Mapping::isLegal() {
         bool one_of_them_succeed = false;
         for (MRRGRoute path : paths) {
             if (this->mrrg.tryOccupyPath(path)) {
-                // edge.serialize(std::cout);
-                // std::cout<<"\n";
                 one_of_them_succeed = true;
-                this->route_map[edge] = path;
+                // this->route_map[edge] = path;
                 break;
             }
         }
@@ -258,13 +246,5 @@ bool Mapping::isLegal() {
 }
 
 bool Mapping::isNull() {
-    return this->mapping.empty();
+    return this->route_map.empty();
 }
-
-/* ------------- ExactMapping ------------- */
-
-// ExactMapping::ExactMapping() {;}
-
-// ExactMapping::ExactMapping(Mapping mapping) {
-    
-// }

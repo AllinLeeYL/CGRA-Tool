@@ -10,6 +10,7 @@ enum MRRGNodeType{
     FUNode,
     MuxNode,
     RegNode,
+    ROOTNode
 };
 
 class MRRGNode {
@@ -31,17 +32,23 @@ public:
     bool operator==(const MRRGNode& other) const;
     bool serialize(std::ostream& f,
                    bool display_attrs=false,
-                   std::string label="") const ;
+                   std::string label="",
+                   bool emphasise=false) const ;
 };
 
 class MRRGEdge {
 public:
+    int ID;
     MRRGNode* src;
     MRRGNode* des;
 public:
-    bool occupied;
+    bool occupied; // deprecated
 public:
-    MRRGEdge(MRRGNode* src, MRRGNode* des);
+    MRRGEdge(int ID, MRRGNode* src, MRRGNode* des);
+    MRRGEdge& operator=(const MRRGEdge& other);
+    bool operator==(const MRRGEdge& other) const;
+    bool operator!=(const MRRGEdge& other) const;
+    bool operator<(const MRRGEdge& other) const;
 };
 
 using MRRGRoute = std::vector<MRRGNode*>;
@@ -116,6 +123,12 @@ public:
      *  @return Return the edge on success, otherwise return NULL.
      */
     MRRGEdge* getEdge(MRRGNode* src, MRRGNode* des) const;
+
+    /** @brief This function try getting the edge from src to des.
+     *
+     *  @return Return the edge on success, otherwise return NULL.
+     */
+    MRRGEdge& getEdge(int srcID, int desID) const;
 
     /** @brief This function try getting the all edges from nodes at T0 to nodes at T1.
      *
