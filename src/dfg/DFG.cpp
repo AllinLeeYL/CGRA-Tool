@@ -347,11 +347,11 @@ void DFG::calculateCycle() {
         for (DFGNode* n : sortedNodes[i]) {
             int cycle = -1;
             for (DFGEdge e : this->getEdgesTo(n)) 
-                cycle = cycle < e.src->latestCycle+1 ? e.src->latestCycle+1 : cycle;
+                cycle = cycle < e.src->cycle+1 ? e.src->cycle+1 : cycle;
             n->cycle = cycle;
         }
     }
-    for (std::vector<DFGNode*> vec : rsortedNodes) 
+    for (std::vector<DFGNode*> vec : rsortedNodes) // Here is the bug!
         for (DFGNode* n : vec) 
             for (DFGEdge e : this->getEdgesTo(n)) 
                 e.src->cycle = e.src->cycle+1 != e.des->cycle ? e.des->cycle-1 : e.src->cycle;

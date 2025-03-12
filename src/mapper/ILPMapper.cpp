@@ -133,9 +133,11 @@ Mapping ILPMapper::mapII(int II, int time_limit) {
             for (DFGEdge ie : ies) {
                 if (ie.isAnti)
                     continue;
-                for (int i=ie.src->cycle; i < node->cycle; i++) {
+                for (int i=ie.src->cycle; i<node->cycle; i++) {
+                    if (ie.src->ID == -1) // special cituation for root node
+                        i = node->cycle - 1;
                     std::vector<MPVariable*> vec;
-                    std::vector<MRRGEdge*> mrrgEdges = mrrg.getEdgesOfT(i, i+1);
+                    std::vector<MRRGEdge*> mrrgEdges = mrrg.getEdgesOfT(i%II, i+1%II);
                     for (MRRGEdge* me : mrrgEdges) {
                         std::string dfgName = std::to_string(ie.src->ID)+">"+std::to_string(ie.des->ID);
                         std::string mrrgName = std::to_string(me->src->ID)+">"+std::to_string(me->des->ID);
@@ -234,7 +236,7 @@ Mapping ILPMapper::mapII(int II, int time_limit) {
         for (DFGEdge oe : dfg->getEdgesFrom(d)) {
             if (oe.isAnti)
                 continue;
-            for (MRRGNode* m : mrrg.getFUsOfT(d->cycle)) {
+            for (MRRGNode* m : mrrg.getFUsOfT(d->cycle)) { // a(0) -> c(1)
                 std::vector<MPVariable*> vec1 = getMPVarOfWhich(solver->variables(), "", std::to_string(d->ID), "", std::to_string(m->ID));
                 std::vector<MPVariable*> vec2 = getMPVarOfWhich(solver->variables(), std::to_string(d->ID), std::to_string(oe.des->ID), std::to_string(m->ID), "");
                 for (MPVariable* v1 : vec1) {
@@ -246,7 +248,7 @@ Mapping ILPMapper::mapII(int II, int time_limit) {
                     LOG_IDT<<"<=  0\n";
                 }
             }
-            for (int i=1; d->cycle+i<oe.des->cycle; i++) {
+            for (int i=1; d->cycle+i<oe.des->cycle; i++) { // a(0) -> c(3)
                 // [*]1. a-c cross multiple cycle;
                 for (MRRGNode* m : mrrg.getFUsOfT(d->cycle+i)) {
                     std::vector<MPVariable*> vec1 = getMPVarOfWhich(solver->variables(), std::to_string(d->ID), std::to_string(oe.des->ID), "", std::to_string(m->ID));

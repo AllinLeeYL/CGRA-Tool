@@ -104,7 +104,7 @@ void Mapping::generateDot(std::ostream& f) {
     }
     /* --- used edges --- */
     std::set<MRRGEdge> usedEdges;
-    f << "    edge [color=\"blue\" style=\"solid\"];\n";
+    f << "    edge [color=\"blue\" style=\"bold\"];\n";
     for (const auto& [de, mes] : this->route_map) {
         if (de.src->nodeType == NULLNode)
             continue;
