@@ -291,13 +291,12 @@ void MRRG::extendGraphUntil(int T) {
             MRRGNode* node = new MRRGNode(this->node_counter++, FUNode, pe, t);
             this->nodes.push_back(node);
             /* --- only when t != 0 --- */
-            if (t == 0) {
-                this->edges.push_back(new MRRGEdge(
+            this->edges.push_back(new MRRGEdge(
                     this->edge_counter++,
                     rootnode,
                     node
                 ));
-            } else
+            if (t != 0) 
                 this->edges.push_back(new MRRGEdge(
                     this->edge_counter++,
                     this->getNodeByDetial(FUNode, pe, t-1), // the last fu
@@ -316,6 +315,21 @@ void MRRG::extendGraphUntil(int T) {
                 this->getNodeByDetial(FUNode, desPE, t)
             ));
         }
+    }
+    /* --- connections from node(T-1) -> node(0) --- */
+    for (PE& pe : this->cgra.PEs) {
+        this->edges.push_back(new MRRGEdge(
+            this->edge_counter++,
+            this->getNodeByDetial(FUNode, pe, T-1),
+            this->getNodeByDetial(FUNode, pe, 0)
+        ));
+    }
+    for (auto & [srcPE, desPE] : this->cgra.connections) {
+        this->edges.push_back(new MRRGEdge(
+            this->edge_counter++,
+            this->getNodeByDetial(FUNode, srcPE, T-1),
+            this->getNodeByDetial(FUNode, desPE, 0)
+        ));
     }
     this->TT = T;
 }
@@ -375,9 +389,12 @@ void MRRG::generateDot(std::ostream& f) {
         f<<"    }\n";
     }
     /* --- edges --- */
+    // f << "    edge [color=\"black\" style=\"dotted\"];\n";
     for (MRRGEdge* edge : this->edges) {
         // if (edge->src->T >= this->II || edge->des->T >= this->II)
-        if (edge->des->T >= this->II || edge->src->T == -1)
+        if (edge->des->T >= this->II 
+         || edge->src->T == -1
+         || edge->src->T == this->II-1)
             continue;
         f << "    ";
         edge->src->serialize(f);

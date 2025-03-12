@@ -105,24 +105,6 @@ Mapping ILPMapper::mapII(int II, int time_limit) {
         LOG_WARNING<<"Could not create solver "<<this->solverName<<"\n";
     }
 
-    // { /* VARIABLE: mappable place for root node */
-    //     std::vector<DFGNode *> rootNodes = dfg->getOpsOfCycle(0);
-    //     for (DFGNode* node : rootNodes) {
-    //         std::vector<MPVariable*> vec;
-    //         for (MRRGNode* fu : mrrg.getFUsOfT(0)) {
-    //             std::string dfgName = "S-"+std::to_string(node->ID);
-    //             std::string mrrgName = "S-"+std::to_string(fu->ID);
-    //             MPVariable* const v = solver->MakeBoolVar(dfgName+":"+mrrgName);
-    //             vec.push_back(v);
-    //         }
-    //         /* CONSTRAINT: Being mapped and only mapped to one place*/
-    //         MPConstraint* const c = solver->MakeRowConstraint(1, 1);
-    //         for (MPVariable* v : vec) {
-    //             c->SetCoefficient(v, 1);
-    //         }
-    //     }
-    // }
-
     { /* VARIABLE: mappable place for each node */
         std::vector<DFGNode*> nodes = dfg->getOpsOfCycle(0, II);
         for (DFGNode* node : nodes) {
@@ -137,7 +119,9 @@ Mapping ILPMapper::mapII(int II, int time_limit) {
                     if (ie.src->ID == -1) // special cituation for root node
                         i = node->cycle - 1;
                     std::vector<MPVariable*> vec;
-                    std::vector<MRRGEdge*> mrrgEdges = mrrg.getEdgesOfT(i%II, i+1%II);
+                    std::vector<MRRGEdge*> mrrgEdges = mrrg.getEdgesOfT(
+                        ie.src->ID == -1 ? -1 : i%II, 
+                        (i+1)%II);
                     for (MRRGEdge* me : mrrgEdges) {
                         std::string dfgName = std::to_string(ie.src->ID)+">"+std::to_string(ie.des->ID);
                         std::string mrrgName = std::to_string(me->src->ID)+">"+std::to_string(me->des->ID);

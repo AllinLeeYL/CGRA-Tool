@@ -78,9 +78,6 @@ void Mapping::clear() {
 
 void Mapping::generateDot(std::ostream& f) {
     int maxT = this->mrrg.II;
-    // for (auto & [d, m] : this->mapping) {
-    //     maxT = std::max(m->T, maxT);
-    // }
     f << "digraph G {\n";
     /* --- nodes --- */
     for (int t=0; t<maxT; t++) {
@@ -121,7 +118,10 @@ void Mapping::generateDot(std::ostream& f) {
     /* --- ununsed edges --- */
     f << "    edge [color=\"black\" style=\"dotted\"];\n";
     for (MRRGEdge* edge : this->mrrg.edges) {
-        if (edge->des->T >= maxT || usedEdges.count(*edge)==1 || edge->src->T == -1)
+        if (edge->des->T >= maxT 
+         || usedEdges.count(*edge)==1 
+         || edge->src->T == -1
+         || edge->src->T == this->mrrg.II-1)
             continue;
         f << "    ";
         edge->src->serialize(f);

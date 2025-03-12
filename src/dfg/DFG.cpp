@@ -147,6 +147,14 @@ std::vector<DFGNode*> DFG::getOps() {
     return ops;
 }
 
+std::vector<DFGNode*> DFG::getOpsOfCycleModII(int T, int II) {
+    std::vector<DFGNode*> ops;
+    for (DFGNode* node : this->nodes) 
+        if (node->isOp() && (node->cycle % II) == T)
+            ops.push_back(node);
+    return ops;
+}
+
 std::vector<DFGNode*> DFG::getOpsOfCycle(int T) {
     return this->getOpsOfCycle(T, T+1);
 }
