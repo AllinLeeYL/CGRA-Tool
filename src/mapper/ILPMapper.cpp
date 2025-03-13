@@ -106,16 +106,15 @@ Mapping ILPMapper::mapII(int II, int time_limit) {
     }
 
     { /* VARIABLE: mappable place for each node */
-        std::vector<DFGNode*> nodes = dfg->getOpsOfCycle(0, II);
+        // std::vector<DFGNode*> nodes = dfg->getOpsOfCycle(0, II);
+        std::vector<DFGNode*> nodes = dfg->getOps();
         for (DFGNode* node : nodes) {
             std::vector<DFGEdge> ies = dfg->getEdgesTo(node);
-            if (ies.size() == 0) {
+            std::vector<DFGEdge> anties = dfg->getAntiEdgesTo(node);
+            if (ies.size() == 0) 
                 ies.push_back(dfg->getEdge(-1, node->ID));
-            }
-            for (DFGEdge ie : ies) {
-                if (ie.isAnti)
-                    continue;
-                for (int i=ie.src->cycle; i<node->cycle; i++) {
+            for (DFGEdge ie : ies) { // edges
+                for (int i=ie.src->cycle; i!=node->cycle; i++) {
                     if (ie.src->ID == -1) // special cituation for root node
                         i = node->cycle - 1;
                     std::vector<MPVariable*> vec;
@@ -124,6 +123,26 @@ Mapping ILPMapper::mapII(int II, int time_limit) {
                         (i+1)%II);
                     for (MRRGEdge* me : mrrgEdges) {
                         std::string dfgName = std::to_string(ie.src->ID)+">"+std::to_string(ie.des->ID);
+                        std::string mrrgName = std::to_string(me->src->ID)+">"+std::to_string(me->des->ID);
+                        MPVariable* const v = solver->MakeBoolVar(dfgName+":"+mrrgName);
+                        vec.push_back(v);
+                    }
+                    /* CONSTRAINT: Being mapped and only mapped to one place*/
+                    MPConstraint* const c = solver->MakeRowConstraint(1, 1);
+                    for (MPVariable* v : vec) {
+                        c->SetCoefficient(v, 1);
+                    }
+                }
+            }
+            for (DFGEdge e : anties) { // anti edges
+                int descycle = node->cycle + II;
+                for (int i=e.src->cycle; i!=descycle; i++) {
+                    std::vector<MPVariable*> vec;
+                    std::vector<MRRGEdge*> mrrgEdges = mrrg.getEdgesOfT(
+                        e.src->ID == -1 ? -1 : i%II, 
+                        (i+1)%II);
+                    for (MRRGEdge* me : mrrgEdges) {
+                        std::string dfgName = std::to_string(e.src->ID)+">"+std::to_string(e.des->ID);
                         std::string mrrgName = std::to_string(me->src->ID)+">"+std::to_string(me->des->ID);
                         MPVariable* const v = solver->MakeBoolVar(dfgName+":"+mrrgName);
                         vec.push_back(v);
@@ -165,25 +184,27 @@ Mapping ILPMapper::mapII(int II, int time_limit) {
         std::cout<<"\n";
     }
 
-    /* CONSTRAINT: One MRRG Node can only be mapped to one DFGNode */
-    LOG_INFO<<"(ILP) Exclusive Constraints:\n";
-    for (std::string cls : mECls) {
-        std::vector<MPVariable*> vec;
-        for (MPVariable* const var : solver->variables()) {
-            std::vector<std::string> ss = split(var->name(), ":");
-            assert(ss.size() == 2);
-            auto [d, m] = std::tuple<std::string, std::string>(ss[0], ss[1]);
-            if (m == cls)
-                vec.push_back(var);
-        }
-        MPConstraint* const c = solver->MakeRowConstraint(0, 1);
-        LOG_IDT<<"0 <= ";
-        for (MPVariable* v : vec) {
-            c->SetCoefficient(v, 1); LOG_IDT<<v->name()<<" + ";
-        }
-        LOG_IDT<<" <= 1\n";
-    }
+    // /* CONSTRAINT: One MRRG Node can only be mapped to one DFGNode */
+    // LOG_INFO<<"(ILP) Exclusive Constraints:\n";
+    // for (std::string cls : mECls) {
+    //     std::vector<MPVariable*> vec;
+    //     for (MPVariable* const var : solver->variables()) {
+    //         auto [ds, dd, ms, md] = getDFGAndMRRGFromMPVar(var);
+    //         std::vector<std::string> ss = split(var->name(), ":");
+    //         assert(ss.size() == 2);
+    //         auto [d, m] = std::tuple<std::string, std::string>(ss[0], ss[1]);
+    //         if (m == cls)
+    //             vec.push_back(var);
+    //     }
+    //     MPConstraint* const c = solver->MakeRowConstraint(0, 1);
+    //     LOG_IDT<<"0 <= ";
+    //     for (MPVariable* v : vec) {
+    //         c->SetCoefficient(v, 1); LOG_IDT<<v->name()<<" + ";
+    //     }
+    //     LOG_IDT<<" <= 1\n";
+    // }
     /* CONSTRAINT: One MRRG Node can only be mapped to one DFGNode. a-b and c-d to different node */
+    LOG_INFO<<"(ILP) Exclusive Constraints:\n";
     std::set<std::string> mdCls;
     for (std::string cls : mECls) {
         std::vector<std::string> ss = split(cls, ">");
@@ -192,7 +213,7 @@ Mapping ILPMapper::mapII(int II, int time_limit) {
     }
     for (std::string cls : mdCls) {
         std::vector<MPVariable*> vec = getMPVarOfWhich(solver->variables(), "", "", "", cls);
-        std::map<int, std::map<int, std::vector<MPVariable*>>> ddClsMap;
+        std::map<int, std::map<int, std::vector<MPVariable*>>> ddClsMap; // {'dd': {'ds': <MPVar>}}
         for (MPVariable* v : vec) {
             auto [ds, dd, ms, md] = getDFGAndMRRGFromMPVar(v);
             if (ddClsMap.count(dd) == 0) {
@@ -206,20 +227,22 @@ Mapping ILPMapper::mapII(int II, int time_limit) {
                     ddClsMap[dd][ds].push_back(v);
             }
         }
+        LOG_IDT<<"0 <= ";
         MPConstraint* const c = solver->MakeRowConstraint(0, 1);
         for (const auto [key, val] : ddClsMap) {
             for (MPVariable* v : val.begin()->second) {
-                c->SetCoefficient(v, 1);
-            }
+                c->SetCoefficient(v, 1); LOG_IDT<<v->name()<<" + ";
+            } 
         }
+        LOG_IDT<<" <= 1\n";
     }
 
     /* CONSTRAINT: Continuation */
     LOG_INFO<<"(ILP) Continuation Constraints:\n";
-    for (DFGNode* d : dfg->getOpsOfCycle(0, mrrg.II-1)) {
+    for (DFGNode* d : dfg->getOps()) {
         for (DFGEdge oe : dfg->getEdgesFrom(d)) {
-            if (oe.isAnti)
-                continue;
+            // if (oe.isAnti)
+            //     continue;
             for (MRRGNode* m : mrrg.getFUsOfT(d->cycle)) { // a(0) -> c(1)
                 std::vector<MPVariable*> vec1 = getMPVarOfWhich(solver->variables(), "", std::to_string(d->ID), "", std::to_string(m->ID));
                 std::vector<MPVariable*> vec2 = getMPVarOfWhich(solver->variables(), std::to_string(d->ID), std::to_string(oe.des->ID), std::to_string(m->ID), "");
@@ -232,9 +255,39 @@ Mapping ILPMapper::mapII(int II, int time_limit) {
                     LOG_IDT<<"<=  0\n";
                 }
             }
-            for (int i=1; d->cycle+i<oe.des->cycle; i++) { // a(0) -> c(3)
+            for (int i=1; d->cycle+i!=oe.des->cycle; i++) { // a(0) -> c(3)
                 // [*]1. a-c cross multiple cycle;
-                for (MRRGNode* m : mrrg.getFUsOfT(d->cycle+i)) {
+                for (MRRGNode* m : mrrg.getFUsOfT((d->cycle+i)%II)) {
+                    std::vector<MPVariable*> vec1 = getMPVarOfWhich(solver->variables(), std::to_string(d->ID), std::to_string(oe.des->ID), "", std::to_string(m->ID));
+                    std::vector<MPVariable*> vec2 = getMPVarOfWhich(solver->variables(), std::to_string(d->ID), std::to_string(oe.des->ID), std::to_string(m->ID), "");
+                    for (MPVariable* v1 : vec1) {
+                        MPConstraint* const c = solver->MakeRowConstraint(-solver->infinity(), 0);
+                        c->SetCoefficient(v1, 1); LOG_IDT<<v1->name();
+                        for (MPVariable* v2 : vec2) {
+                            c->SetCoefficient(v2, -1); LOG_IDT<<"-  "<<v2->name();
+                        }
+                        LOG_IDT<<"<=  0\n";
+                    }
+                }
+            }
+        }
+        for (DFGEdge oe : dfg->getAntiEdgesFrom(d)) {
+            for (MRRGNode* m : mrrg.getFUsOfT(d->cycle)) { // a(0) -> c(1)
+                std::vector<MPVariable*> vec1 = getMPVarOfWhich(solver->variables(), "", std::to_string(d->ID), "", std::to_string(m->ID));
+                std::vector<MPVariable*> vec2 = getMPVarOfWhich(solver->variables(), std::to_string(d->ID), std::to_string(oe.des->ID), std::to_string(m->ID), "");
+                for (MPVariable* v1 : vec1) {
+                    MPConstraint* const c = solver->MakeRowConstraint(-solver->infinity(), 0);
+                    c->SetCoefficient(v1, 1); LOG_IDT<<v1->name();
+                    for (MPVariable* v2 : vec2) {
+                        c->SetCoefficient(v2, -1); LOG_IDT<<"-  "<<v2->name();
+                    }
+                    LOG_IDT<<"<=  0\n";
+                }
+            }
+            int descycle = oe.des->cycle + II;
+            for (int i=1; d->cycle+i!=descycle; i++) { // a(0) -> c(3)
+                // [*]1. a-c cross multiple cycle;
+                for (MRRGNode* m : mrrg.getFUsOfT((d->cycle+i)%II)) {
                     std::vector<MPVariable*> vec1 = getMPVarOfWhich(solver->variables(), std::to_string(d->ID), std::to_string(oe.des->ID), "", std::to_string(m->ID));
                     std::vector<MPVariable*> vec2 = getMPVarOfWhich(solver->variables(), std::to_string(d->ID), std::to_string(oe.des->ID), std::to_string(m->ID), "");
                     for (MPVariable* v1 : vec1) {

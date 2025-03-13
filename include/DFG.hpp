@@ -90,7 +90,7 @@ private:
     int node_counter, edge_counter;
     std::vector<DFGNode*> nodes;
     std::vector<DFGEdge> edges;
-    std::vector<DFGEdge> ctrlEdges;
+    std::vector<DFGEdge> ctrlEdges; // Control edges are all anti edges.
 
     std::vector<llvm::Instruction*> insts;
 private: /* flags */
@@ -154,6 +154,8 @@ public:
 
     std::vector<DFGEdge> getEdgesTo(DFGNode*, bool visibleOnly=true, bool noAnti=true);
     std::vector<DFGEdge> getEdgesFrom(DFGNode*, bool visibleOnly=true, bool noAnti=true);
+    std::vector<DFGEdge> getAntiEdgesTo(DFGNode*);
+    std::vector<DFGEdge> getAntiEdgesFrom(DFGNode*);
     
     /** @brief This function will get edge whose source with srcID and destination with desID
      *

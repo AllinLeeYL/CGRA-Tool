@@ -99,11 +99,47 @@ void Mapping::generateDot(std::ostream& f) {
         }
         f<<"    }\n";
     }
-    /* --- used edges --- */
     std::set<MRRGEdge> usedEdges;
-    f << "    edge [color=\"blue\" style=\"bold\"];\n";
+    /* --- normal edges --- */
+    f << "    edge [color=\"black\" style=\"solid\"];\n";
     for (const auto& [de, mes] : this->route_map) {
         if (de.src->nodeType == NULLNode)
+            continue;
+        if (de.isAnti)
+            continue;
+        for (MRRGEdge me : mes) {
+            f << "    ";
+            me.src->serialize(f);
+            f << " -> ";
+            me.des->serialize(f);
+            f << ";\n";
+            usedEdges.insert(me);
+        }
+    }
+
+    /* --- anti edges --- */
+    f << "    edge [color=\"blue\" style=\"solid\"];\n";
+    for (const auto& [de, mes] : this->route_map) {
+        if (de.src->nodeType == NULLNode)
+            continue;
+        if (!de.isAnti || de.isCtrl)
+            continue;
+        for (MRRGEdge me : mes) {
+            f << "    ";
+            me.src->serialize(f);
+            f << " -> ";
+            me.des->serialize(f);
+            f << ";\n";
+            usedEdges.insert(me);
+        }
+    }
+
+    /* --- anti edges --- */
+    f << "    edge [color=\"red\" style=\"solid\"];\n";
+    for (const auto& [de, mes] : this->route_map) {
+        if (de.src->nodeType == NULLNode)
+            continue;
+        if (!de.isAnti || !de.isCtrl)
             continue;
         for (MRRGEdge me : mes) {
             f << "    ";

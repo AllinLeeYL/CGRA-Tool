@@ -72,7 +72,7 @@ bool MRRGNode::serialize(std::ostream& f, bool display_attrs, std::string label,
         if (label != "")
             f<<" label=\""<<name.str()<<"\\n"<<label<<"\"";
         if (emphasise)
-            f<<" color=red";
+            f<<" color=cadetblue style=bold";
         f<<"]";
     }
     return true;

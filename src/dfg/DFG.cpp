@@ -194,6 +194,25 @@ std::vector<DFGEdge> DFG::getEdges(bool visibleOnly) {
     return edges;
 }
 
+std::vector<DFGEdge> DFG::getAntiEdgesTo(DFGNode* node) {
+    std::vector<DFGEdge> edges;
+    for (DFGEdge edge : this->edges) {
+        if (!edge.isVisible())
+            continue;
+        if (!edge.isAnti)
+            continue;
+        if (edge.des != node)
+            continue;
+        edges.push_back(edge);
+    }
+    for (DFGEdge edge : this->ctrlEdges) {
+        if (edge.des != node)
+            continue;
+        edges.push_back(edge);
+    }
+    return edges;
+}
+
 std::vector<DFGEdge> DFG::getEdgesTo(DFGNode* node, bool visibleOnly, bool noAnti) {
     std::vector<DFGEdge> edges;
     for (DFGEdge edge : this->edges) {
@@ -209,6 +228,25 @@ std::vector<DFGEdge> DFG::getEdgesTo(DFGNode* node, bool visibleOnly, bool noAnt
         return edges;
     for (DFGEdge edge : this->ctrlEdges) {
         if (edge.des != node)
+            continue;
+        edges.push_back(edge);
+    }
+    return edges;
+}
+
+std::vector<DFGEdge> DFG::getAntiEdgesFrom(DFGNode* node) {
+    std::vector<DFGEdge> edges;
+    for (DFGEdge edge : this->edges) {
+        if (!edge.isVisible())
+            continue;
+        if (!edge.isAnti)
+            continue;
+        if (edge.src != node)
+            continue;
+        edges.push_back(edge);
+    }
+    for (DFGEdge edge : this->ctrlEdges) {
+        if (edge.src != node)
             continue;
         edges.push_back(edge);
     }
@@ -237,10 +275,12 @@ std::vector<DFGEdge> DFG::getEdgesFrom(DFGNode* node, bool visibleOnly, bool noA
 }
 
 DFGEdge& DFG::getEdge(int srcID, int desID) {
-    for (DFGEdge& e : this->edges) {
+    for (DFGEdge& e : this->edges) 
         if (e.src->ID == srcID && e.des->ID == desID)
             return e;
-    }
+    for (DFGEdge& e : this->ctrlEdges) 
+        if (e.src->ID == srcID && e.des->ID == desID)
+            return e;
     LOG_WARNING<<"Could not find edge: "<<srcID<<"->"<<desID<<" in DFG\n";
     exit(1);
 }
