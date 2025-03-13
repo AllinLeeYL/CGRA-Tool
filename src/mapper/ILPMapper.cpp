@@ -184,25 +184,6 @@ Mapping ILPMapper::mapII(int II, int time_limit) {
         std::cout<<"\n";
     }
 
-    // /* CONSTRAINT: One MRRG Node can only be mapped to one DFGNode */
-    // LOG_INFO<<"(ILP) Exclusive Constraints:\n";
-    // for (std::string cls : mECls) {
-    //     std::vector<MPVariable*> vec;
-    //     for (MPVariable* const var : solver->variables()) {
-    //         auto [ds, dd, ms, md] = getDFGAndMRRGFromMPVar(var);
-    //         std::vector<std::string> ss = split(var->name(), ":");
-    //         assert(ss.size() == 2);
-    //         auto [d, m] = std::tuple<std::string, std::string>(ss[0], ss[1]);
-    //         if (m == cls)
-    //             vec.push_back(var);
-    //     }
-    //     MPConstraint* const c = solver->MakeRowConstraint(0, 1);
-    //     LOG_IDT<<"0 <= ";
-    //     for (MPVariable* v : vec) {
-    //         c->SetCoefficient(v, 1); LOG_IDT<<v->name()<<" + ";
-    //     }
-    //     LOG_IDT<<" <= 1\n";
-    // }
     /* CONSTRAINT: One MRRG Node can only be mapped to one DFGNode. a-b and c-d to different node */
     LOG_INFO<<"(ILP) Exclusive Constraints:\n";
     std::set<std::string> mdCls;
@@ -240,7 +221,7 @@ Mapping ILPMapper::mapII(int II, int time_limit) {
     /* CONSTRAINT: Continuation */
     LOG_INFO<<"(ILP) Continuation Constraints:\n";
     for (DFGNode* d : dfg->getOps()) {
-        for (DFGEdge oe : dfg->getEdgesFrom(d)) {
+        for (DFGEdge oe : dfg->getEdgesFrom(d, true, false)) {
             // if (oe.isAnti)
             //     continue;
             for (MRRGNode* m : mrrg.getFUsOfT(d->cycle)) { // a(0) -> c(1)
@@ -255,36 +236,7 @@ Mapping ILPMapper::mapII(int II, int time_limit) {
                     LOG_IDT<<"<=  0\n";
                 }
             }
-            for (int i=1; d->cycle+i!=oe.des->cycle; i++) { // a(0) -> c(3)
-                // [*]1. a-c cross multiple cycle;
-                for (MRRGNode* m : mrrg.getFUsOfT((d->cycle+i)%II)) {
-                    std::vector<MPVariable*> vec1 = getMPVarOfWhich(solver->variables(), std::to_string(d->ID), std::to_string(oe.des->ID), "", std::to_string(m->ID));
-                    std::vector<MPVariable*> vec2 = getMPVarOfWhich(solver->variables(), std::to_string(d->ID), std::to_string(oe.des->ID), std::to_string(m->ID), "");
-                    for (MPVariable* v1 : vec1) {
-                        MPConstraint* const c = solver->MakeRowConstraint(-solver->infinity(), 0);
-                        c->SetCoefficient(v1, 1); LOG_IDT<<v1->name();
-                        for (MPVariable* v2 : vec2) {
-                            c->SetCoefficient(v2, -1); LOG_IDT<<"-  "<<v2->name();
-                        }
-                        LOG_IDT<<"<=  0\n";
-                    }
-                }
-            }
-        }
-        for (DFGEdge oe : dfg->getAntiEdgesFrom(d)) {
-            for (MRRGNode* m : mrrg.getFUsOfT(d->cycle)) { // a(0) -> c(1)
-                std::vector<MPVariable*> vec1 = getMPVarOfWhich(solver->variables(), "", std::to_string(d->ID), "", std::to_string(m->ID));
-                std::vector<MPVariable*> vec2 = getMPVarOfWhich(solver->variables(), std::to_string(d->ID), std::to_string(oe.des->ID), std::to_string(m->ID), "");
-                for (MPVariable* v1 : vec1) {
-                    MPConstraint* const c = solver->MakeRowConstraint(-solver->infinity(), 0);
-                    c->SetCoefficient(v1, 1); LOG_IDT<<v1->name();
-                    for (MPVariable* v2 : vec2) {
-                        c->SetCoefficient(v2, -1); LOG_IDT<<"-  "<<v2->name();
-                    }
-                    LOG_IDT<<"<=  0\n";
-                }
-            }
-            int descycle = oe.des->cycle + II;
+            int descycle = oe.isAnti ? oe.des->cycle + II : oe.des->cycle;
             for (int i=1; d->cycle+i!=descycle; i++) { // a(0) -> c(3)
                 // [*]1. a-c cross multiple cycle;
                 for (MRRGNode* m : mrrg.getFUsOfT((d->cycle+i)%II)) {
@@ -300,7 +252,6 @@ Mapping ILPMapper::mapII(int II, int time_limit) {
                     }
                 }
             }
-            
         }
     }
 
