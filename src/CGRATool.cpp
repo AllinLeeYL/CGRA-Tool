@@ -3,6 +3,7 @@
 #include <set>
 #include <vector>
 #include <map>
+#include <chrono>
 #include "Mapper.hpp"
 #include "json.hpp"
 #include "rang.hpp"
@@ -210,10 +211,11 @@ int main(int argc, char** argv) {
         cgra.generateVerilog(fverilog);
         fverilog.close();
 
-        time_t start = time(NULL);
+        auto start = std::chrono::high_resolution_clock::now();
         // cgratool::Mapping mapping = mapper.map(MII);
         cgratool::Mapping mapping = mapper.map(MII); //! restore to original after debugging dummy
-        time_t end = time(NULL);
+        auto end = std::chrono::high_resolution_clock::now();
+        auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
 
         if (mapping.isNull())
             LOG_WARNING<<"Could not find a legal mapping.\n";
@@ -223,7 +225,7 @@ int main(int argc, char** argv) {
             mapping.generateDot(fmapping);
             fmapping.close();
         }
-        std::cout<<fg::cyan<<"[INFO] "<<fg::reset<<"time used: "<<(end-start)<<" seconds.\n";
+        std::cout<<fg::cyan<<"[INFO] "<<fg::reset<<"Total time used: "<<duration.count()<<"ms.\n";
         return 0;
     }
 }

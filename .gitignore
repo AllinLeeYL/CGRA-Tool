@@ -11,6 +11,11 @@ playground/
 
 # intermediate files
 *.dot
+*.bc
+
+# logs
+*.csv
+*.log
 
 # Prerequisites
 *.d

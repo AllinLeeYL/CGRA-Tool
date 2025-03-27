@@ -412,6 +412,8 @@ DFGNode* DFG::parseInst(Instruction* inst) {
         return node;
     }
     unsigned int opCode = inst->getOpcode();
+    if (13 <= opCode && opCode <= 30)
+        return this->parseInt32OP(inst);
     switch (opCode) {
         case PHI: 
             return this->parsePhi(inst);
@@ -421,12 +423,20 @@ DFGNode* DFG::parseInst(Instruction* inst) {
             return this->parseLoad(inst);
         case Store:
             return this->parseStore(inst);
-        case Add:
-            return this->parseInt32OP(inst);
+        // case Add:
+        //     return this->parseInt32OP(inst);
+        // case Mul:
+        //     return this->parseInt32OP(inst);
         case FAdd:
             return this->parseFloat32OP(inst);
         case FMul:
             return this->parseFloat32OP(inst);
+        // case And:
+        //     return this->parseInt32OP(inst);
+        // case Xor:
+        //     return this->parseInt32OP(inst);
+        // case ZExt:
+        //     return this->parseInt32OP(inst);
         case ICmp:
             return this->parseIcmp(inst);
         case Br:

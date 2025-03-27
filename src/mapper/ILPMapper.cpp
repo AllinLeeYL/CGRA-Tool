@@ -83,7 +83,7 @@ Mapping ILPMapper::map(int II, int time_limit) {
     for (int ii = II; mapping.isNull(); ii++) {
         time_t now = time(NULL);
         if (now - start > time_limit)
-            return mapping;
+            break;
         mapping = this->mapII(ii);
         // break; //! delete this after debugging
     }
@@ -94,12 +94,12 @@ Mapping ILPMapper::mapII(int II, int time_limit) {
     Mapping mapping(this->dfg, MRRG(this->cgra, II));
     MRRG &mrrg = mapping.mrrg;
     /* --- Debugging --- */
-    std::string fname = "mrrg-";
-    fname.append(std::to_string(II));
-    fname.append(".dot");
-    std::ofstream fmrrg(fname, std::ios::out);
-    mrrg.generateDot(fmrrg);
-    fmrrg.close();
+    // std::string fname = "mrrg-";
+    // fname.append(std::to_string(II));
+    // fname.append(".dot");
+    // std::ofstream fmrrg(fname, std::ios::out);
+    // mrrg.generateDot(fmrrg);
+    // fmrrg.close();
 
     auto start = std::chrono::high_resolution_clock::now();
 
@@ -177,18 +177,18 @@ Mapping ILPMapper::mapII(int II, int time_limit) {
         std::set<std::string> s2(mECls.begin(), mECls.end() );
         mECls.assign(s2.begin(), s2.end());
 
-        LOG_INFO<<"(ILP) DFG Variable classses:\n";
-        for (auto s : dECls)
-            LOG_IDT<<s;
-        std::cout<<"\n";
-        LOG_INFO<<"(ILP) MRRG Variable classses:\n";
-        for (auto s : mECls)
-            LOG_IDT<<s;
-        std::cout<<"\n";
+        // LOG_INFO<<"(ILP) DFG Variable classses:\n";
+        // for (auto s : dECls)
+        //     LOG_IDT<<s;
+        // std::cout<<"\n";
+        // LOG_INFO<<"(ILP) MRRG Variable classses:\n";
+        // for (auto s : mECls)
+        //     LOG_IDT<<s;
+        // std::cout<<"\n";
     }
 
     /* CONSTRAINT: One MRRG Node can only be mapped to one DFGNode. a-b and c-d to different node */
-    LOG_INFO<<"(ILP) Exclusive Constraints:\n";
+    // LOG_INFO<<"(ILP) Exclusive Constraints:\n";
     std::set<std::string> mdCls;
     for (std::string cls : mECls) {
         std::vector<std::string> ss = split(cls, ">");
@@ -212,14 +212,14 @@ Mapping ILPMapper::mapII(int II, int time_limit) {
             }
         }
         /* CONSTRAINT: One MRRG Node can only be mapped to one DFGNode. a-b and c-d to different node */
-        LOG_IDT<<"0 <= ";
+        // LOG_IDT<<"0 <= ";
         MPConstraint* const c = solver->MakeRowConstraint(0, 1);
         for (const auto [key, val] : ddClsMap) {
             for (MPVariable* v : val.begin()->second) {
-                c->SetCoefficient(v, 1); LOG_IDT<<v->name()<<" + ";
+                c->SetCoefficient(v, 1); // LOG_IDT<<v->name()<<" + ";
             } 
         }
-        LOG_IDT<<" <= 1\n";
+        // LOG_IDT<<" <= 1\n";
         /* CONSTRAINT: Consistency. DFG b->c and DFG a->c Mapped to the same place on MRRG */
         for (const auto [key, val] : ddClsMap) {
             auto iter=val.begin();
@@ -237,7 +237,7 @@ Mapping ILPMapper::mapII(int II, int time_limit) {
     }
 
     /* CONSTRAINT: Continuation */
-    LOG_INFO<<"(ILP) Continuation Constraints:\n";
+    // LOG_INFO<<"(ILP) Continuation Constraints:\n";
     for (DFGNode* d : dfg->getOps()) {
         for (DFGEdge oe : dfg->getEdgesFrom(d, true, false)) {
             // if (oe.isAnti)
@@ -247,11 +247,11 @@ Mapping ILPMapper::mapII(int II, int time_limit) {
                 std::vector<MPVariable*> vec2 = getMPVarOfWhich(solver->variables(), std::to_string(d->ID), std::to_string(oe.des->ID), std::to_string(m->ID), "");
                 for (MPVariable* v1 : vec1) {
                     MPConstraint* const c = solver->MakeRowConstraint(-solver->infinity(), 0);
-                    c->SetCoefficient(v1, 1); LOG_IDT<<v1->name();
+                    c->SetCoefficient(v1, 1); // LOG_IDT<<v1->name();
                     for (MPVariable* v2 : vec2) {
-                        c->SetCoefficient(v2, -1); LOG_IDT<<"-  "<<v2->name();
+                        c->SetCoefficient(v2, -1); // LOG_IDT<<"-  "<<v2->name();
                     }
-                    LOG_IDT<<"<=  0\n";
+                    // LOG_IDT<<"<=  0\n";
                 }
             }
             int descycle = oe.isAnti ? oe.des->cycle + II : oe.des->cycle;
@@ -262,11 +262,11 @@ Mapping ILPMapper::mapII(int II, int time_limit) {
                     std::vector<MPVariable*> vec2 = getMPVarOfWhich(solver->variables(), std::to_string(d->ID), std::to_string(oe.des->ID), std::to_string(m->ID), "");
                     for (MPVariable* v1 : vec1) {
                         MPConstraint* const c = solver->MakeRowConstraint(-solver->infinity(), 0);
-                        c->SetCoefficient(v1, 1); LOG_IDT<<v1->name();
+                        c->SetCoefficient(v1, 1); // LOG_IDT<<v1->name();
                         for (MPVariable* v2 : vec2) {
-                            c->SetCoefficient(v2, -1); LOG_IDT<<"-  "<<v2->name();
+                            c->SetCoefficient(v2, -1); // LOG_IDT<<"-  "<<v2->name();
                         }
-                        LOG_IDT<<"<=  0\n";
+                        // LOG_IDT<<"<=  0\n";
                     }
                 }
             }
@@ -308,31 +308,31 @@ Mapping ILPMapper::mapII(int II, int time_limit) {
     }
     obj->SetMinimization();
 
-    LOG_INFO<<"Solving with "<<solver->SolverVersion()<<"\n";
+    LOG_INFO<<"Solving II="<<II<<" with "<<solver->SolverVersion()<<"";
     auto stop = std::chrono::high_resolution_clock::now();
     const MPSolver::ResultStatus result_status = solver->Solve();
     auto end = std::chrono::high_resolution_clock::now();
 
-    LOG_INFO<<"Solution:";
-    LOG_IDT<<"Objective value = "<<obj->Value()<<"\n";
-    for (MPVariable* var : solver->variables()) {
-        LOG_IDT<<var->name()<<" = " <<var->solution_value()<<"\n";
-    }
+    // LOG_INFO<<"Solution:";
+    // LOG_IDT<<"Objective value = "<<obj->Value()<<"\n";
+    // for (MPVariable* var : solver->variables()) {
+    //     LOG_IDT<<var->name()<<" = " <<var->solution_value()<<"\n";
+    // }
+    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - stop);
+    std::cout<<"; Solving time: "<<duration.count()<<" ms. ";
 
-    LOG_INFO<<"Result status: ";
+    std::cout<<"Result status: ";
     if (result_status != MPSolver::OPTIMAL) {
-        std::cout<<YELLOW(result_status);
-        LOG_WARNING<<"The problem does not have an optimal solution.\n";
+        std::cout<<YELLOW(result_status)<<".\n";
         if (result_status == MPSolver::FEASIBLE)
-            LOG_INFO<<"A potentially suboptimal solution was found.\n";
+            ;
+            // std::cout<<"A potentially suboptimal solution was found.\n";
         else {
-            LOG_WARNING<<"The solver could not solve the problem!\n";
+            // std::cout<<"The solver could not solve the problem!\n";
             return Mapping();
         }
     } else 
-        std::cout<<GREEN(result_status);
-    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - stop);
-    std::cout<<"; Solving time: "<<duration.count()<<" ms\n";
+        std::cout<<GREEN(result_status)<<"\n";
 
     /* Construct Mapping */
     for (MPVariable* var : solver->variables()) {
