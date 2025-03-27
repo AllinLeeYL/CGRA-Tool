@@ -1,3 +1,4 @@
+#include <chrono>
 #include "Common.hpp"
 #include "Mapper.hpp"
 #include "ortools/base/logging.h"
@@ -84,7 +85,7 @@ Mapping ILPMapper::map(int II, int time_limit) {
         if (now - start > time_limit)
             return mapping;
         mapping = this->mapII(ii);
-        break; //! delete this after debugging
+        // break; //! delete this after debugging
     }
     return mapping;
 }
@@ -99,7 +100,9 @@ Mapping ILPMapper::mapII(int II, int time_limit) {
     std::ofstream fmrrg(fname, std::ios::out);
     mrrg.generateDot(fmrrg);
     fmrrg.close();
-    
+
+    auto start = std::chrono::high_resolution_clock::now();
+
     std::unique_ptr<MPSolver> solver(MPSolver::CreateSolver(this->solverName));
     if (!solver) {
         LOG_WARNING<<"Could not create solver "<<this->solverName<<"\n";
@@ -157,7 +160,7 @@ Mapping ILPMapper::mapII(int II, int time_limit) {
         }
     }
 
-    /* unique edge variables for ILP from DFG and MRRG */
+    /* Get unique edge variables for ILP from DFG and MRRG */
     std::vector<std::string> dECls; // Class names of DFG edges
     std::vector<std::string> mECls; // Class names of MRRG edges
     {
@@ -224,7 +227,7 @@ Mapping ILPMapper::mapII(int II, int time_limit) {
         for (DFGEdge oe : dfg->getEdgesFrom(d, true, false)) {
             // if (oe.isAnti)
             //     continue;
-            for (MRRGNode* m : mrrg.getFUsOfT(d->cycle)) { // a(0) -> c(1)
+            for (MRRGNode* m : mrrg.getFUsOfT(d->cycle%II)) { // a(0) -> c(1)
                 std::vector<MPVariable*> vec1 = getMPVarOfWhich(solver->variables(), "", std::to_string(d->ID), "", std::to_string(m->ID));
                 std::vector<MPVariable*> vec2 = getMPVarOfWhich(solver->variables(), std::to_string(d->ID), std::to_string(oe.des->ID), std::to_string(m->ID), "");
                 for (MPVariable* v1 : vec1) {
@@ -238,7 +241,7 @@ Mapping ILPMapper::mapII(int II, int time_limit) {
             }
             int descycle = oe.isAnti ? oe.des->cycle + II : oe.des->cycle;
             for (int i=1; d->cycle+i!=descycle; i++) { // a(0) -> c(3)
-                // [*]1. a-c cross multiple cycle;
+                // [x]1. a-c cross multiple cycle;
                 for (MRRGNode* m : mrrg.getFUsOfT((d->cycle+i)%II)) {
                     std::vector<MPVariable*> vec1 = getMPVarOfWhich(solver->variables(), std::to_string(d->ID), std::to_string(oe.des->ID), "", std::to_string(m->ID));
                     std::vector<MPVariable*> vec2 = getMPVarOfWhich(solver->variables(), std::to_string(d->ID), std::to_string(oe.des->ID), std::to_string(m->ID), "");
@@ -255,9 +258,9 @@ Mapping ILPMapper::mapII(int II, int time_limit) {
         }
     }
 
-    /* CONSTRAINT: DFG b->c and DFG a->c Mapped to the same place on MRRG */
-    for (MRRGNode * m : mrrg.getFUsOfT(0, mrrg.II)) {
-        for (DFGNode* d : dfg->getOpsOfCycle(m->T)) {
+    /* CONSTRAINT: Consistency. DFG b->c and DFG a->c Mapped to the same place on MRRG */
+    for (MRRGNode * m : mrrg.getFUsOfT(0, II)) {
+        for (DFGNode* d : dfg->getOpsOfCycleModII(m->T, II)) {
             std::vector<DFGEdge> vec = dfg->getEdgesTo(d);
             for (int i=1; i<vec.size(); i++) {
                 DFGNode* ds = vec[i-1].src;
@@ -291,9 +294,16 @@ Mapping ILPMapper::mapII(int II, int time_limit) {
     obj->SetMinimization();
 
     LOG_INFO<<"Solving with "<<solver->SolverVersion()<<"\n";
-    time_t start = time(NULL);
+    auto stop = std::chrono::high_resolution_clock::now();
     const MPSolver::ResultStatus result_status = solver->Solve();
-    time_t end = time(NULL);
+    auto end = std::chrono::high_resolution_clock::now();
+
+    LOG_INFO<<"Solution:";
+    LOG_IDT<<"Objective value = "<<obj->Value()<<"\n";
+    for (MPVariable* var : solver->variables()) {
+        LOG_IDT<<var->name()<<" = " <<var->solution_value()<<"\n";
+    }
+
     LOG_INFO<<"Result status: ";
     if (result_status != MPSolver::OPTIMAL) {
         std::cout<<YELLOW(result_status);
@@ -306,13 +316,8 @@ Mapping ILPMapper::mapII(int II, int time_limit) {
         }
     } else 
         std::cout<<GREEN(result_status);
-    
-    std::cout<<"; Solving time: "<<(end-start)<<"\n";
-    LOG_INFO<<"Solution:";
-    LOG_IDT<<"Objective value = "<<obj->Value()<<"\n";
-    for (MPVariable* var : solver->variables()) {
-        LOG_IDT<<var->name()<<" = " <<var->solution_value()<<"\n";
-    }
+    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - stop);
+    std::cout<<"; Solving time: "<<duration.count()<<" ms\n";
 
     /* Construct Mapping */
     for (MPVariable* var : solver->variables()) {

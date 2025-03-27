@@ -720,7 +720,7 @@ void DFG::generateDot(std::ofstream& f, bool show_more) {
         edge.serialize(f);
         f<<";\n";
     }
-    f << "edge [color=blue]\n"; // anti-edges
+    f << "edge [color=blue, style=dashed]\n"; // anti-edges
     for (DFGEdge edge : this->edges) {
         if (!show_more && !edge.isVisible()) {
             continue;
@@ -731,7 +731,7 @@ void DFG::generateDot(std::ofstream& f, bool show_more) {
             f<<";\n";
         }
     }
-    f << "edge [color=red]\n"; // control edge
+    f << "edge [color=red, style=dashed]\n"; // control edge
     for (DFGEdge edge : this->ctrlEdges) {
         f<<"    ";
         edge.serialize(f);
