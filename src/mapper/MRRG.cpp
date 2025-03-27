@@ -142,6 +142,8 @@ void MRRG::reset() {
 }
 
 std::vector<MRRGNode*> MRRG::getFUs(int T) {
+    if (T == -1)
+        T = this->II;
     return this->getFUsOfT(0, T);
 }
 

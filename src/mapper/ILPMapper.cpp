@@ -211,6 +211,7 @@ Mapping ILPMapper::mapII(int II, int time_limit) {
                     ddClsMap[dd][ds].push_back(v);
             }
         }
+        /* CONSTRAINT: One MRRG Node can only be mapped to one DFGNode. a-b and c-d to different node */
         LOG_IDT<<"0 <= ";
         MPConstraint* const c = solver->MakeRowConstraint(0, 1);
         for (const auto [key, val] : ddClsMap) {
@@ -219,6 +220,20 @@ Mapping ILPMapper::mapII(int II, int time_limit) {
             } 
         }
         LOG_IDT<<" <= 1\n";
+        /* CONSTRAINT: Consistency. DFG b->c and DFG a->c Mapped to the same place on MRRG */
+        for (const auto [key, val] : ddClsMap) {
+            auto iter=val.begin();
+            iter++;
+            for (; iter!=val.end(); iter++) {
+                MPConstraint* const c = solver->MakeRowConstraint(0, 0);
+                for (const auto v : iter->second)
+                    c->SetCoefficient(v, 1);
+                iter--;
+                for (const auto v : iter->second)
+                    c->SetCoefficient(v, -1);
+                iter++;
+            }
+        }
     }
 
     /* CONSTRAINT: Continuation */
@@ -259,22 +274,22 @@ Mapping ILPMapper::mapII(int II, int time_limit) {
     }
 
     /* CONSTRAINT: Consistency. DFG b->c and DFG a->c Mapped to the same place on MRRG */
-    for (MRRGNode * m : mrrg.getFUsOfT(0, II)) {
-        for (DFGNode* d : dfg->getOpsOfCycleModII(m->T, II)) {
-            std::vector<DFGEdge> vec = dfg->getEdgesTo(d);
-            for (int i=1; i<vec.size(); i++) {
-                DFGNode* ds = vec[i-1].src;
-                std::vector<MPVariable*> vec1 = getMPVarOfWhich(solver->variables(), std::to_string(ds->ID), std::to_string(d->ID), "", std::to_string(m->ID));
-                ds = vec[i].src;
-                std::vector<MPVariable*> vec2 = getMPVarOfWhich(solver->variables(), std::to_string(ds->ID), std::to_string(d->ID), "", std::to_string(m->ID));
-                MPConstraint* const c = solver->MakeRowConstraint(0, 0);
-                for (MPVariable* v : vec1)
-                    c->SetCoefficient(v, 1);
-                for (MPVariable* v : vec2)
-                    c->SetCoefficient(v, -1);
-            }
-        }
-    }
+    // for (MRRGNode * m : mrrg.getFUsOfT(0, II)) {
+    //     for (DFGNode* d : dfg->getOpsOfCycleModII(m->T, II)) {
+    //         std::vector<DFGEdge> vec = dfg->getEdgesTo(d);
+    //         for (int i=1; i<vec.size(); i++) {
+    //             DFGNode* ds = vec[i-1].src;
+    //             std::vector<MPVariable*> vec1 = getMPVarOfWhich(solver->variables(), std::to_string(ds->ID), std::to_string(d->ID), "", std::to_string(m->ID));
+    //             ds = vec[i].src;
+    //             std::vector<MPVariable*> vec2 = getMPVarOfWhich(solver->variables(), std::to_string(ds->ID), std::to_string(d->ID), "", std::to_string(m->ID));
+    //             MPConstraint* const c = solver->MakeRowConstraint(0, 0);
+    //             for (MPVariable* v : vec1)
+    //                 c->SetCoefficient(v, 1);
+    //             for (MPVariable* v : vec2)
+    //                 c->SetCoefficient(v, -1);
+    //         }
+    //     }
+    // }
 
     // LOG_INFO<<"Number of variables = "<<solver->NumVariables()<<"\n";
     // for (MPVariable* const var : solver->variables()) {
