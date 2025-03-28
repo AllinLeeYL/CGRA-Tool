@@ -12,6 +12,7 @@ playground/
 # intermediate files
 *.dot
 *.bc
+*.svg
 
 # logs
 *.csv

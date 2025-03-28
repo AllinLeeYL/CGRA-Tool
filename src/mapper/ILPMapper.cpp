@@ -79,18 +79,29 @@ ILPMapper::ILPMapper(DFG* dfg, CGRA cgra, std::string solver) : Mapper(dfg, cgra
 
 Mapping ILPMapper::map(int II, int time_limit) {
     Mapping mapping;
+    std::unique_ptr<operations_research::MPSolver> solver(MPSolver::CreateSolver(this->solverName));
+    if (!solver) 
+        LOG_WARNING<<"Could not create solver "<<this->solverName<<"\n";
+    LOG_INFO<<"Solving with "<<solver->SolverVersion()<<"\n";
+    LOG_IDT<<"II\tV&C Time\tSolving Time\tResult\n";
     time_t start = time(NULL);
     for (int ii = II; mapping.isNull(); ii++) {
         time_t now = time(NULL);
         if (now - start > time_limit)
             break;
-        mapping = this->mapII(ii);
+        auto const [m, t1, t2, result] = this->mapII(ii);
+        LOG_IDT<<ii<<"\t"<<t1<<"\t\t"<<t2<<"\t\t";
+        if (result == MPSolver::OPTIMAL || result == MPSolver::FEASIBLE)
+            std::cout<<GREEN(result)<<"\n";
+        else
+            std::cout<<YELLOW(result)<<"\n";
+        mapping = m;
         // break; //! delete this after debugging
     }
     return mapping;
 }
 
-Mapping ILPMapper::mapII(int II, int time_limit) {
+std::tuple<Mapping, std::chrono::milliseconds, std::chrono::milliseconds, MPSolver::ResultStatus> ILPMapper::mapII(int II, int time_limit) {
     Mapping mapping(this->dfg, MRRG(this->cgra, II));
     MRRG &mrrg = mapping.mrrg;
     /* --- Debugging --- */
@@ -100,13 +111,13 @@ Mapping ILPMapper::mapII(int II, int time_limit) {
     // std::ofstream fmrrg(fname, std::ios::out);
     // mrrg.generateDot(fmrrg);
     // fmrrg.close();
-
-    auto start = std::chrono::high_resolution_clock::now();
-
-    std::unique_ptr<MPSolver> solver(MPSolver::CreateSolver(this->solverName));
+    std::unique_ptr<operations_research::MPSolver> solver(MPSolver::CreateSolver(this->solverName));
     if (!solver) {
         LOG_WARNING<<"Could not create solver "<<this->solverName<<"\n";
+        exit(1);
     }
+
+    auto start = std::chrono::high_resolution_clock::now();
 
     { /* VARIABLE: mappable place for each node */
         // std::vector<DFGNode*> nodes = dfg->getOpsOfCycle(0, II);
@@ -307,32 +318,25 @@ Mapping ILPMapper::mapII(int II, int time_limit) {
         obj->SetCoefficient(var, 1);
     }
     obj->SetMinimization();
-
-    LOG_INFO<<"Solving II="<<II<<" with "<<solver->SolverVersion()<<"";
-    auto stop = std::chrono::high_resolution_clock::now();
-    const MPSolver::ResultStatus result_status = solver->Solve();
     auto end = std::chrono::high_resolution_clock::now();
+    auto solver_prepare_time = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
 
+    start = std::chrono::high_resolution_clock::now();
+    const MPSolver::ResultStatus result_status = solver->Solve();
+    end = std::chrono::high_resolution_clock::now();
+    auto solving_time = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
     // LOG_INFO<<"Solution:";
     // LOG_IDT<<"Objective value = "<<obj->Value()<<"\n";
     // for (MPVariable* var : solver->variables()) {
     //     LOG_IDT<<var->name()<<" = " <<var->solution_value()<<"\n";
     // }
-    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - stop);
-    std::cout<<"; Solving time: "<<duration.count()<<" ms. ";
 
-    std::cout<<"Result status: ";
-    if (result_status != MPSolver::OPTIMAL) {
-        std::cout<<YELLOW(result_status)<<".\n";
-        if (result_status == MPSolver::FEASIBLE)
-            ;
-            // std::cout<<"A potentially suboptimal solution was found.\n";
-        else {
-            // std::cout<<"The solver could not solve the problem!\n";
-            return Mapping();
-        }
-    } else 
-        std::cout<<GREEN(result_status)<<"\n";
+    if (result_status != MPSolver::OPTIMAL && result_status != MPSolver::FEASIBLE) {
+        return std::tuple<Mapping, 
+                          std::chrono::milliseconds, 
+                          std::chrono::milliseconds,
+                          MPSolver::ResultStatus>(Mapping(), solver_prepare_time, solving_time, result_status);
+    } 
 
     /* Construct Mapping */
     for (MPVariable* var : solver->variables()) {
@@ -343,6 +347,9 @@ Mapping ILPMapper::mapII(int II, int time_limit) {
         MRRGEdge& mr = mrrg.getEdge(ms, md);
         mapping[de].push_back(mr);
     }
-
-    return mapping;
+    
+    return std::tuple<Mapping, 
+                      std::chrono::milliseconds, 
+                      std::chrono::milliseconds,
+                      MPSolver::ResultStatus>(mapping, solver_prepare_time, solving_time, result_status);
 }

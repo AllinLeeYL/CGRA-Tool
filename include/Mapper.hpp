@@ -5,6 +5,7 @@
 #include "CGRA.hpp"
 #include "MRRG.hpp"
 #include "Mapping.hpp"
+#include "ortools/linear_solver/linear_solver.h"
 
 namespace cgratool
 {
@@ -138,7 +139,10 @@ namespace cgratool
          *           This function will not try to increase the number of II.
          * @param time_limit The time limit (second).
          */
-        Mapping mapII(int II, int time_limit = 120);
+        std::tuple<Mapping, 
+                   std::chrono::milliseconds, 
+                   std::chrono::milliseconds, 
+                   operations_research::MPSolver::ResultStatus> mapII(int II, int time_limit = 120);
     };
 
 }

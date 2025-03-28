@@ -14,12 +14,7 @@ using fg = rang::fg;       // console font fontgraound color
 using style = rang::style; // console font style
 
 bool isTerminalInst(Instruction* inst) {
-    unsigned int opCode = inst->getOpcode();
-    // cout << "terminal op code " << inst->getOpcode() << "\n";
-    if (1 <= opCode && opCode <= 11) {
-        return true;
-    }
-    return false;
+    return 1 <= inst->getOpcode() && inst->getOpcode() <= 11;
 }
 
 DFG::DFG() {
@@ -78,9 +73,14 @@ DFG::DFG(std::vector<llvm::BasicBlock*>& BBs){
     // extract instructions to this->insts
     for(BasicBlock* bb: BBs) {
         outs()<<"bb "<<bb->getName().str()<<":\n";
-        for(BasicBlock::iterator inst=bb->begin(); inst!=bb->end(); inst++) {
-            this->insts.push_back(&*inst);
-            outs()<<"  "<<*inst<<"\n";
+        BasicBlock::iterator iter=bb->begin();
+        for(; iter!=bb->end(); iter++) {
+            this->insts.push_back(&*iter);
+            outs()<<"  "<<*iter<<"\n";
+        }
+        if (!isa<BranchInst>(&*(--iter))) {
+            LOG_WARNING<<"basic block doens not end with terminal instruction may cause unexpected errors!\n";
+            outs()<<"[ERROR!!!]: "<<*iter<<"\n";
         }
     }
     // parse instruction
@@ -97,35 +97,34 @@ DFG::DFG(std::vector<llvm::BasicBlock*>& BBs){
 }
 
 void DFG::parseCtrlEdge() {
-    Instruction* terminalInst = this->insts.back(); // TODO: This may lead to some bugs.
-    if (!isTerminalInst(terminalInst)) {
-        LOG_WARNING<<"basic block doens not end with terminal instruction may cause unexpected behavior!\n";
-        outs()<<"\tThe culprit is "<<*terminalInst<<"\n";
-    }
+    for(Instruction* inst : this->insts) {
+        if (!isTerminalInst(inst))
+            continue;
+        Instruction* terminalInst = inst;
+        std::vector<Instruction*> PHIs;
+        for (Instruction* inst: this->insts) {
+            if (inst->getOpcode() == PHI)
+                PHIs.push_back(inst);
+        }
 
-    std::vector<Instruction*> PHIs;
-    for (Instruction* inst: this->insts) {
-        if (inst->getOpcode() == PHI)
-            PHIs.push_back(inst);
-    }
-
-    if (isa<BranchInst>(terminalInst) && cast<BranchInst>(*terminalInst).isConditional()) {
-        const BranchInst &BI(cast<BranchInst>(*terminalInst));
-        for(int i=0; i<2; i++) {
-            BasicBlock* bb = BI.getSuccessor(i);
-            for (Instruction* inst : PHIs) {
-                const PHINode *PN = dyn_cast<PHINode>(inst);
-                for (unsigned op = 0, Eop = PN->getNumIncomingValues(); op < Eop; ++op) {
-                    if (PN->getIncomingBlock(op) == bb) {
-                        this->addEdge(this->getNode(terminalInst),
-                                      this->getNode(inst),
-                                      true);
+        if (isa<BranchInst>(terminalInst) && cast<BranchInst>(*terminalInst).isConditional()) {
+            const BranchInst &BI(cast<BranchInst>(*terminalInst));
+            for(int i=0; i<2; i++) {
+                BasicBlock* bb = BI.getSuccessor(i);
+                for (Instruction* inst : PHIs) {
+                    const PHINode *PN = dyn_cast<PHINode>(inst);
+                    for (unsigned op = 0, Eop = PN->getNumIncomingValues(); op < Eop; ++op) {
+                        if (PN->getIncomingBlock(op) == bb) {
+                            this->addEdge(this->getNode(terminalInst),
+                                        this->getNode(inst),
+                                        true);
+                        }
                     }
                 }
             }
-        }
-    } else {
-        outs()<<"[ERROR!!!]: "<<*terminalInst<<"\n";
+        } else if (!isa<BranchInst>(terminalInst)) {
+            outs()<<"[ERROR!!!]: "<<*terminalInst<<"\n";
+        } else {}
     }
 }
 
@@ -286,7 +285,6 @@ DFGEdge& DFG::getEdge(int srcID, int desID) {
 }
 
 int DFG::getRecMII() {
-    LOG_INFO<<"hello\n";
     this->calculateCycle(); // Assign an earliest and latest start cycle to each OPNode
     std::vector<DFGEdge> tedges; // Anti edges
     // Initialize
@@ -412,37 +410,25 @@ DFGNode* DFG::parseInst(Instruction* inst) {
         return node;
     }
     unsigned int opCode = inst->getOpcode();
-    if (13 <= opCode && opCode <= 30)
+    if (13 <= opCode && opCode <= 30) // standard binary operators: 13-24; logical operators: 25-30
         return this->parseInt32OP(inst);
+    if (38 <= opCode && opCode <= 50) // cast operators: 38 - 50
+        return this->parseInt32OP(inst);
+    if (53 <= opCode && opCode <= 67) // other operators: 53 - 67
+        return this->parseOtherOP(inst);
     switch (opCode) {
-        case PHI: 
-            return this->parsePhi(inst);
         case GetElementPtr:
             return this->parseGetElementPtr(inst);
         case Load:
             return this->parseLoad(inst);
         case Store:
             return this->parseStore(inst);
-        // case Add:
-        //     return this->parseInt32OP(inst);
-        // case Mul:
-        //     return this->parseInt32OP(inst);
         case FAdd:
             return this->parseFloat32OP(inst);
         case FMul:
             return this->parseFloat32OP(inst);
-        // case And:
-        //     return this->parseInt32OP(inst);
-        // case Xor:
-        //     return this->parseInt32OP(inst);
-        // case ZExt:
-        //     return this->parseInt32OP(inst);
-        case ICmp:
-            return this->parseIcmp(inst);
         case Br:
             return this->parseBr(inst);
-        case Call:
-            return this->parseCall(inst);
         default:
             std::cout<<"not recognized instruction: "<<fg::red<<inst->getOpcodeName()<<fg::reset<<"\n";
             exit(1);
@@ -520,6 +506,42 @@ DFGNode* DFG::parseInt32OP(Instruction* inst) {
 
 DFGNode* DFG::parseFloat32OP(Instruction* inst) {
     DFGNode* curNode = new DFGNode(this->node_counter++, OPNode, inst, (OPCode)inst->getOpcode(), FLOAT);
+    this->nodes.push_back(curNode);
+    for (const auto& operand: inst->operands()) {
+        if (auto *constant = dyn_cast<ConstantInt>(operand)) { // constant int
+            // outs()<<"[DEBUG]: add constant int "<<constant->getZExtValue()<<" to the nodes\n";
+            DFGNode* constNode = new DFGNode(this->node_counter++, ConstNode);
+            constNode->intVal = constant->getZExtValue();
+            constNode->dataType = INT;
+            this->nodes.push_back(constNode);
+            this->addEdge(constNode, curNode);
+        } else if (auto *value = dyn_cast<Value>(operand)) { // value (from a instruction)
+            // outs()<<"[DEBUG]: found value ID:"<<value->getValueID()<<"; "<<*value<<"; Value pointer:"<<value<<"\n";
+            DFGNode* valueNode = this->getNodeElseCreate((Instruction*)value);
+            this->addEdge(valueNode, curNode);
+        } else {
+            outs()<<"[ERROR!!!]: "<<*operand<<"\n";
+        }
+    }
+    return curNode;
+}
+
+DFGNode* DFG::parseOtherOP(Instruction* inst) {
+    unsigned int opCode = inst->getOpcode();
+    switch (opCode) {
+        case PHI: 
+            return this->parsePhi(inst);
+        case Select:
+            break;
+        case ICmp:
+            return this->parseIcmp(inst);
+        case Call:
+            return this->parseCall(inst);
+        default:
+            std::cout<<"not recognized instruction: "<<fg::red<<inst->getOpcodeName()<<fg::reset<<"\n";
+            exit(1);
+    }
+    DFGNode* curNode = new DFGNode(this->node_counter++, OPNode, inst, (OPCode)inst->getOpcode(), INT);
     this->nodes.push_back(curNode);
     for (const auto& operand: inst->operands()) {
         if (auto *constant = dyn_cast<ConstantInt>(operand)) { // constant int
@@ -689,9 +711,8 @@ DFGNode* DFG::getNodeElseCreate(Instruction* inst) {
    Else return true. */
 bool DFG::shouldIgnore(Instruction* inst) {
     for (Instruction* inst_iter : this->insts) {
-        if (inst_iter == inst) {
+        if (inst_iter == inst) 
             return false;
-        }
     }
     return true;
 }

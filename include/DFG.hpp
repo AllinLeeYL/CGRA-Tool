@@ -100,6 +100,7 @@ protected:
     DFGNode* parsePhi(llvm::Instruction* inst);
     DFGNode* parseInt32OP(llvm::Instruction* inst);
     DFGNode* parseFloat32OP(llvm::Instruction* inst);
+    DFGNode* parseOtherOP(llvm::Instruction* inst);
     DFGNode* parseGetElementPtr(llvm::Instruction* inst);
     DFGNode* parseLoad(llvm::Instruction* inst);
     DFGNode* parseStore(llvm::Instruction* inst);

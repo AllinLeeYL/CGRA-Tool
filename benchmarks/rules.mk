@@ -18,7 +18,7 @@ OPT_DISABLE_FLAGS ?= -fno-vectorize -fno-slp-vectorize -fno-unroll-loops -ffp-co
 
 build: ${ll_files}
 
-.PHONY: build
+.PHONY: build extract
 
 run: run_mapper
 

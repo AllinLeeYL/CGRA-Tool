@@ -204,12 +204,12 @@ int main(int argc, char** argv) {
         fdfg = std::ofstream("dfg-more.dot", std::ios::out);
         dfg.generateDot(fdfg, true);
         fdfg.close();
-        std::ofstream fcgra("cgra.dot", std::ios::out);
-        cgra.generateDot(fcgra);
-        fcgra.close();
-        std::ofstream fverilog("cgra.v", std::ios::out);
-        cgra.generateVerilog(fverilog);
-        fverilog.close();
+        // std::ofstream fcgra("cgra.dot", std::ios::out);
+        // cgra.generateDot(fcgra);
+        // fcgra.close();
+        // std::ofstream fverilog("cgra.v", std::ios::out);
+        // cgra.generateVerilog(fverilog);
+        // fverilog.close();
 
         auto start = std::chrono::high_resolution_clock::now();
         // cgratool::Mapping mapping = mapper.map(MII);

@@ -1,12 +1,12 @@
 ; ModuleID = 'sum.bc'
 source_filename = "sum.cpp"
-target datalayout = "e-m:o-i64:64-i128:128-n32:64-S128-Fn32"
-target triple = "arm64-apple-macosx15.0.0"
+target datalayout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-i128:128-f80:128-n8:16:32:64-S128"
+target triple = "x86_64-unknown-linux-gnu"
 
-@n = local_unnamed_addr global ptr null, align 8
+@n = dso_local local_unnamed_addr global ptr null, align 8
 
-; Function Attrs: mustprogress nofree norecurse nounwind ssp uwtable(sync)
-define noundef i32 @_Z6kernelv() local_unnamed_addr #0 {
+; Function Attrs: mustprogress nofree norecurse nounwind uwtable
+define dso_local noundef i32 @_Z6kernelv() local_unnamed_addr #0 {
   %1 = load ptr, ptr @n, align 8, !tbaa !5
   %2 = load volatile i32, ptr %1, align 4, !tbaa !9
   %3 = icmp sgt i32 %2, 0
@@ -31,24 +31,24 @@ define noundef i32 @_Z6kernelv() local_unnamed_addr #0 {
   ret i32 %15
 }
 
-; Function Attrs: mustprogress nofree norecurse nounwind ssp willreturn uwtable(sync)
-define noundef i32 @main() local_unnamed_addr #1 {
+; Function Attrs: mustprogress nofree norecurse nounwind willreturn uwtable
+define dso_local noundef i32 @main() local_unnamed_addr #1 {
   %1 = load ptr, ptr @n, align 8, !tbaa !5
   %2 = load volatile i32, ptr %1, align 4, !tbaa !9
   ret i32 0
 }
 
-attributes #0 = { mustprogress nofree norecurse nounwind ssp uwtable(sync) "frame-pointer"="non-leaf" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="apple-m1" "target-features"="+aes,+altnzcv,+ccdp,+ccidx,+complxnum,+crc,+dit,+dotprod,+flagm,+fp-armv8,+fp16fml,+fptoint,+fullfp16,+jsconv,+lse,+neon,+pauth,+perfmon,+predres,+ras,+rcpc,+rdm,+sb,+sha2,+sha3,+specrestrict,+ssbs,+v8.1a,+v8.2a,+v8.3a,+v8.4a,+v8a,+zcm,+zcz" }
-attributes #1 = { mustprogress nofree norecurse nounwind ssp willreturn uwtable(sync) "frame-pointer"="non-leaf" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="apple-m1" "target-features"="+aes,+altnzcv,+ccdp,+ccidx,+complxnum,+crc,+dit,+dotprod,+flagm,+fp-armv8,+fp16fml,+fptoint,+fullfp16,+jsconv,+lse,+neon,+pauth,+perfmon,+predres,+ras,+rcpc,+rdm,+sb,+sha2,+sha3,+specrestrict,+ssbs,+v8.1a,+v8.2a,+v8.3a,+v8.4a,+v8a,+zcm,+zcz" }
+attributes #0 = { mustprogress nofree norecurse nounwind uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
+attributes #1 = { mustprogress nofree norecurse nounwind willreturn uwtable "min-legal-vector-width"="0" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="x86-64" "target-features"="+cmov,+cx8,+fxsr,+mmx,+sse,+sse2,+x87" "tune-cpu"="generic" }
 
 !llvm.module.flags = !{!0, !1, !2, !3}
 !llvm.ident = !{!4}
 
 !0 = !{i32 1, !"wchar_size", i32 4}
 !1 = !{i32 8, !"PIC Level", i32 2}
-!2 = !{i32 7, !"uwtable", i32 1}
-!3 = !{i32 7, !"frame-pointer", i32 1}
-!4 = !{!"Homebrew clang version 19.1.2"}
+!2 = !{i32 7, !"PIE Level", i32 2}
+!3 = !{i32 7, !"uwtable", i32 2}
+!4 = !{!"clang version 20.0.0git (git@github.com:AllinLeeYL/llvm-project.git 48736518c9b24f51ca02af02a7b469e230ea6bcc)"}
 !5 = !{!6, !6, i64 0}
 !6 = !{!"any pointer", !7, i64 0}
 !7 = !{!"omnipotent char", !8, i64 0}

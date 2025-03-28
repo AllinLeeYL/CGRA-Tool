@@ -31,10 +31,25 @@ enum OPCode {
     Load = 32,
     Store = 33,
     GetElementPtr = 34,
-    ZExt = 39,
+
+    Trunc = 38, // Truncate integers
+    ZExt = 39, // Zero extend integers
+    SExt = 40, // Sign extend integers
+    FPToUI = 41, // floating point -> UInt
+    FPToSI = 42, // floating point -> SInt
+    UIToFP = 43, // UInt -> floating point
+    SIToFP = 44, // SInt -> floating point
+    FPTrunc = 45, // Truncate floating point
+    FPExt = 46, // Extend floating point
+    PtrToInt = 47, // Pointer -> Integer
+    IntToPtr = 48, // Integer -> Pointer
+    BitCast = 49, // Type cast
+    AddrSpaceCast = 50, // addrspace cast
+
     ICmp = 53,
     PHI = 55,
     Call = 56,
+    Select = 57,
     /* Deprecated: Complex OP not defined in "Instruction.def" */
     FMulAdd = 100,
 };

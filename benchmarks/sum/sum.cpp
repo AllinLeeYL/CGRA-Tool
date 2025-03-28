@@ -7,11 +7,8 @@ int kernel() {
     int N = *n;
     int sum = 0;
     int i;
-    for (i = 0; i < N; i++) {
-        //DFGLoop: loop
+    for (i = 0; i < N; i++) 
         sum += a[i];
-    }
-    // printf("sum = %d\n", sum);
     return sum;
 }
 

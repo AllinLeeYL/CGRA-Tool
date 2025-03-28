@@ -13,7 +13,9 @@ inline double ReLU(double x) {
 }
 
 // Forward propagation for a single layer
-void kernel(LinearLayer *layer, double inputs[], int input_size, double outputs[], int output_size, double biases[], double weights[][]) {
+void kernel(double inputs[], int input_size, 
+            double outputs[], int output_size, 
+            double biases[], double weights[][]) {
     for (int i = 0; i < output_size; i++) {
         // Calculate the weighted sum of inputs
         double activation = biases[i];
@@ -30,9 +32,10 @@ int main()
 
 //  input_dsp (input, NTAPS, 0);
 
-  kernel(input, output, coefficients);
+  kernel(input, NTAPS, output, NTAPS, coefficients);
 
 //  output_dsp (input, NTAPS, 0);
 //  output_dsp (coefficients, NTAPS, 0);
 //  output_dsp (output, NTAPS, 0);
   return 0;
+}
