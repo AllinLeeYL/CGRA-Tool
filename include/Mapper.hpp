@@ -130,7 +130,7 @@ namespace cgratool
          * @param II The minimium II.
          * @param time_limit The time limit (second).
          */
-        Mapping map(int II, int time_limit = 1200);
+        Mapping map(int II, int time_limit = 300);
 
         /** @brief Try mapping the DFG onto the CGRA with a given II.
          *

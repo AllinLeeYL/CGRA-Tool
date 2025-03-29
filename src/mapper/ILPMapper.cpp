@@ -83,14 +83,14 @@ Mapping ILPMapper::map(int II, int time_limit) {
     if (!solver) 
         LOG_WARNING<<"Could not create solver "<<this->solverName<<"\n";
     LOG_INFO<<"Solving with "<<solver->SolverVersion()<<"\n";
-    LOG_IDT<<"II\tV&C Time\tSolving Time\tResult\n";
+    LOG_IDT<<"II\tVar&Con\tSolving\tResult\n";
     time_t start = time(NULL);
     for (int ii = II; mapping.isNull(); ii++) {
         time_t now = time(NULL);
         if (now - start > time_limit)
             break;
         auto const [m, t1, t2, result] = this->mapII(ii);
-        LOG_IDT<<ii<<"\t"<<t1<<"\t\t"<<t2<<"\t\t";
+        LOG_IDT<<ii<<"\t"<<t1<<"\t"<<t2<<"\t";
         if (result == MPSolver::OPTIMAL || result == MPSolver::FEASIBLE)
             std::cout<<GREEN(result)<<"\n";
         else

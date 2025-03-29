@@ -5,6 +5,7 @@
 #include "rang.hpp"
 #include <stdexcept>
 #include <fstream>
+#include <algorithm>
 
 using namespace cgratool;
 using namespace llvm;
@@ -397,10 +398,17 @@ void DFG::calculateCycle() {
             n->cycle = cycle;
         }
     }
-    for (std::vector<DFGNode*> vec : rsortedNodes) // Here is the bug!
-        for (DFGNode* n : vec) 
-            for (DFGEdge e : this->getEdgesTo(n)) 
-                e.src->cycle = e.src->cycle+1 != e.des->cycle ? e.des->cycle-1 : e.src->cycle;
+    for (std::vector<DFGNode*> vec : rsortedNodes) { // Here is the bug!
+        for (DFGNode* n : vec) {
+            std::vector<DFGEdge> oes = this->getEdgesFrom(n);
+            std::vector<int> cycles;
+            std::for_each(oes.begin(), oes.end(), [&](DFGEdge oe) { cycles.push_back(oe.des->cycle); });
+            if (!cycles.empty()) 
+                n->cycle = *std::min_element(cycles.begin(), cycles.end()) - 1;
+        }
+    }
+            // for (DFGEdge e : this->getEdgesTo(n)) 
+            //     e.src->cycle = e.src->cycle+1 != e.des->cycle ? e.des->cycle-1 : e.src->cycle;
     this->cycleIsCalculated = true;
 }
 
