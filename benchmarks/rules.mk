@@ -32,7 +32,10 @@ run: run_mapper
 	${LLVM-DIS} '$*.bc'
 
 clean:
-	rm -f *.bc *.ll
+	- rm -f *.dot
+
+cleanall:
+	- rm -f *.bc *.ll *.dot
 
 ## FOR RUNNING ##
 

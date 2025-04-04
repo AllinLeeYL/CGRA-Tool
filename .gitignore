@@ -51,3 +51,6 @@ playground/
 *.exe
 *.out
 *.app
+
+# MacOS Garbage
+*.DS_Store

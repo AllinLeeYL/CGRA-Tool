@@ -27,6 +27,7 @@ using style = rang::style; // console font style
 
 cl::OptionCategory CGRACat("toycgra Options");
 
+/* required parameters */
 static cl::opt<std::string> InputFilename(cl::Positional,
                                           cl::desc("<input IR file>"),
                                           cl::init(""),
@@ -43,7 +44,13 @@ static cl::list<std::string> BasicBlocks (
     cl::value_desc("function:bb1[;bb2...]"),
     cl::cat(CGRACat)
 );
+
 /* optional parameters */
+static cl::opt<std::string> ARCH (
+    "arch", cl::init("2dmesh"),
+    cl::desc("The architecture to be used. Acceptable arguments are preset names and file names. Available preset architecture are: <2dmesh>"),
+    cl::cat(CGRACat)
+);
 static cl::opt<unsigned> ROW_SIZE (
     "cgra-row-size", cl::init(4), 
     cl::desc("Set the row size of the PE array of CGRA."),
@@ -58,13 +65,14 @@ static cl::opt<unsigned> COL_SIZE (
 
 static cl::opt<std::string> ILPSolver (
     "ilp-solver", cl::init("CP-SAT"), 
-    cl::desc("Available solvers: <CP-SAT|SCIP>"),
+    cl::desc("Available solvers are: <CP-SAT|SCIP>"),
     cl::cat(CGRACat)
 );
 
 int main(int argc, char** argv) {
     InitLLVM X(argc, argv);
-    cl::HideUnrelatedOptions({&CGRACat, &getColorCategory()});
+    // cl::HideUnrelatedOptions({&CGRACat, &getColorCategory()});
+    cl::HideUnrelatedOptions({&CGRACat});
     cl::ParseCommandLineOptions(argc, argv, "A CGRA mapper takes IR as input and outputs mapping.\n");
 
     SMDiagnostic Err;
@@ -88,6 +96,7 @@ int main(int argc, char** argv) {
     ModulePassManager PM;
     PM.run(*M, MAM);
 
+    /* help info */
     LOG_INFO<<"Arguments:\n";
     LOG_INFO<<"\t*row-size: "<<ROW_SIZE<<"\n";
     LOG_INFO<<"\t*col-size: "<<COL_SIZE<<"\n";
@@ -185,7 +194,8 @@ int main(int argc, char** argv) {
     for (std::vector<BasicBlock*> loop : loops) {
         /* Construct the DFG, the CGRA, and the mapper. */
         cgratool::DFG dfg(loop);
-        cgratool::CGRA cgra(ROW_SIZE, COL_SIZE);
+        dfg.eliminatePhi();
+        cgratool::CGRA cgra(ROW_SIZE, COL_SIZE, ARCH);
 
         /* Choose a mapper */
         cgratool::ILPMapper mapper(&dfg, cgra, ILPSolver);

@@ -53,6 +53,9 @@ inline std::vector<MPVariable*> getMPVarOfWhich(std::vector<MPVariable*> vars,
     return vec;
 }
 
+/** Get the the DFG edge and MRRG edge from MP variable
+ * @return <d1, d2, m1, m2>, the IDs representing the DFG edge d1->d2 and its corresponding MRRG edge m1->m2
+*/
 inline std::tuple<int, int, int, int> getDFGAndMRRGFromMPVar(MPVariable* v) {
     std::vector<std::string> ss = split(v->name(), ":");
     auto [ld, lm] = std::tuple<std::string, std::string>(ss[0], ss[1]);
@@ -63,9 +66,6 @@ inline std::tuple<int, int, int, int> getDFGAndMRRGFromMPVar(MPVariable* v) {
     assert(ss.size() == 2);
     assert(s0.size() == 2);
     assert(s1.size() == 2);
-    // return std::tuple<int, int>(std::stoi(ldd), std::stoi(lmd));
-    // lds = lds == "S" ? "-1" : lds;
-    // lms = lms == "S" ? "-1" : lms;
     return std::tuple<int, int, int, int>(
                       std::stoi(lds), std::stoi(ldd), 
                       std::stoi(lms), std::stoi(lmd));
@@ -77,6 +77,9 @@ ILPMapper::ILPMapper(DFG* dfg, CGRA cgra, std::string solver) : Mapper(dfg, cgra
     this->solverName = solver;
 }
 
+/** Iterative mapping procedure, continuously invoking mapII\(\) with increasing IIs., ending if reaching the time limit or found a valid map.
+ * @return a valid mapping
+*/
 Mapping ILPMapper::map(int II, int time_limit) {
     Mapping mapping;
     std::unique_ptr<operations_research::MPSolver> solver(MPSolver::CreateSolver(this->solverName));
@@ -253,6 +256,7 @@ std::tuple<Mapping, std::chrono::milliseconds, std::chrono::milliseconds, MPSolv
         for (DFGEdge oe : dfg->getEdgesFrom(d, true, false)) {
             // if (oe.isAnti)
             //     continue;
+            // #pragma omp parallel for
             for (MRRGNode* m : mrrg.getFUsOfT(d->cycle%II)) { // a(0) -> c(1)
                 std::vector<MPVariable*> vec1 = getMPVarOfWhich(solver->variables(), "", std::to_string(d->ID), "", std::to_string(m->ID));
                 std::vector<MPVariable*> vec2 = getMPVarOfWhich(solver->variables(), std::to_string(d->ID), std::to_string(oe.des->ID), std::to_string(m->ID), "");

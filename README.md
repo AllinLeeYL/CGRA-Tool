@@ -1,8 +1,12 @@
 # CGRA-Tool
 
-A CGRA tool, including a mapper that can map LLVM loops in the form of IR to targeted CGRA, integrated with LLVM as an standalone executable binary.
+The CGRA-Tool is a compiler for scheduling LLVM IR code to PE array-like architectures, such as CGRAs. It's designed to be a fully free-to-use, newbie-friendly software to assist CGRA research and CGRA compiler development. Using CGRA-Tool, you do not need to get a license of Gurobi like using CGRA-ME. 
 
-The idea of developing such a tool affiliating CGRA-related research and developing is to build a user-friendly, easy-to-use,  CGRA compilation framework. 
+# How it works?
+
+CGRA-Tool is designed to be a standalone executable binary integrated with LLVM. CGRA-Tool includes a DFG analyzer to build the DFG graph using LLVM IR as input, an MRRG builder to build the MRRG graph given a CGRA architecture, and a mapper that can map LLVM loops in the form of IR to targeted CGRA.
+
+CGRA-Tool accepts LLVM IR as input, using a ILP-based mapper, (currently only ILP mapper), and maps the targeted Basic Block(s) to designated architecture.
 
 # Install on Ubuntu24.04
 
@@ -28,7 +32,7 @@ cd build && make
 make install
 ```
 
-You can also install OR-Tools from pre-built binary. But you have to make sure your cmake can find cmake configuration files provided by OT-Tools, such as 'ortoolsConfig.cmake'.
+Alternatively, you can also install OR-Tools from pre-built binary, though you have to make sure your cmake can find cmake configuration files provided by OT-Tools, such as 'ortoolsConfig.cmake'.
 
 ```bash
 sudo apt update
@@ -99,6 +103,7 @@ cgra-tool --cgra-row-size=2 --cgra-col-size=2 --bb="_Z6kernelv.extracted:%1" ext
 
  - [x] ILP mapper.
  - [x] Visualize mapping result.
+ - [ ] Feasible mapper, a faster mapper, by sacrifying optimal solution.
  - [ ] Support customized CGRA arhitecture.
  - [ ] Robost CMD parameters support.
 

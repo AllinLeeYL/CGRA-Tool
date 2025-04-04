@@ -157,6 +157,11 @@ public:
     std::vector<DFGEdge> getEdgesFrom(DFGNode*, bool visibleOnly=true, bool noAnti=true);
     std::vector<DFGEdge> getAntiEdgesTo(DFGNode*);
     std::vector<DFGEdge> getAntiEdgesFrom(DFGNode*);
+
+    /** @brief Do transformation to the DFG to eliminate Phi node
+     *  @return success or not
+     */
+    bool eliminatePhi();
     
     /** @brief This function will get edge whose source with srcID and destination with desID
      *

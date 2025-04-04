@@ -1,4 +1,4 @@
-add_llvm_library(mapper
+add_library(mapper OBJECT
     MRRG.cpp
     Mapper.cpp
     ExhaustiveMapper.cpp

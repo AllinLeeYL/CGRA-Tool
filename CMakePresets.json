@@ -7,10 +7,10 @@
     },
     "configurePresets": [
         {
-            "name": "debug-make",
-            "displayName": "Generate UNIX Makefiles for debugging",
-            "description": "Sets UNIX Makefiles generator, build and install directory",
-            "generator": "Unix Makefiles",
+            "name": "debug",
+            "displayName": "Generate Ninja Makefiles for debugging",
+            "description": "Sets Ninja Makefiles generator, build and install directory",
+            "generator": "Ninja",
             "binaryDir": "${sourceDir}/build/${presetName}",
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "Debug",
@@ -20,10 +20,10 @@
             }
         },
         {
-            "name": "release-make",
-            "displayName": "Generate UNIX Makefiles for releasing",
-            "description": "Sets UNIX Makefiles generator, build and install directory",
-            "generator": "Unix Makefiles",
+            "name": "release",
+            "displayName": "Generate Ninja Makefiles for releasing",
+            "description": "Sets Ninja Makefiles generator, build and install directory",
+            "generator": "Ninja",
             "binaryDir": "${sourceDir}/build/${presetName}",
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "Release",
@@ -35,9 +35,9 @@
     ],
     "buildPresets": [
         {
-            "name": "debug-make",
-            "displayName": "Build debuggable target with UNIX Makefiles",
-            "configurePreset": "debug-make",
+            "name": "debug",
+            "displayName": "Build debuggable target with Ninja Makefiles",
+            "configurePreset": "debug",
             "configuration": "Debug",
             "targets": "all",
             "jobs": 8
@@ -48,7 +48,7 @@
             "name": "benchmarks/sum",
             "description": "test benchmarks/sum/extracted.ll",
             "displayName": "",
-            "configurePreset": "debug-make"
+            "configurePreset": "debug"
         }
     ]
 }

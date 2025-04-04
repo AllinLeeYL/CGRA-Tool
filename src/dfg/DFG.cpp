@@ -305,6 +305,14 @@ int DFG::getRecMII() {
     return maxII;
 }
 
+bool DFG::eliminatePhi() {
+    for (DFGNode* node : this->nodes) {
+        if (node->nodeType == OPNode && node->opCode == PHI)
+            continue;
+    }
+    return true;
+}
+
 
 std::vector<std::vector<DFGNode*>> DFG::topologySortedNodes(bool r) {
     std::vector<std::vector<DFGNode*>> vecs;

@@ -5,7 +5,19 @@ using namespace cgratool;
 
 CGRA::CGRA() {}
 
-CGRA::CGRA(int row, int col) {
+CGRA::CGRA(int row, int col, std::string arch) {
+    try {
+        if (arch.compare("2dmesh") == 0)
+            init2dmesh(row, col);
+        else 
+            throw std::invalid_argument("not supported argument:"+arch);
+    } catch (const exception& e) {
+        LOG_ERROR<<e.what();
+        exit(1);
+    }
+}
+
+void CGRA::init2dmesh(int row, int col) {
     this->nodeID = 0;
     this->row = row;
     this->col = col;

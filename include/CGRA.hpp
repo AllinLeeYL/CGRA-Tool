@@ -20,10 +20,11 @@ public:
 
 public:
     CGRA();
-    CGRA(int row, int col);
+    CGRA(int row, int col, std::string arch);
     CGRA(const CGRA& other);
     CGRA& operator=(const CGRA& other);
     ~CGRA();
+    void init2dmesh(int row, int col);
     int getPECount();
     void generateDot(std::ostream& f);
     void generateVerilog(std::ostream& f);
