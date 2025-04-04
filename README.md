@@ -1,8 +1,6 @@
 # CGRA-Tool
 
-A CGRA tool, including a mapper that can map LLVM loops in the form of IR to targeted CGRA, integrated with LLVM as an standalone executable binary.
-
-The idea of developing such a tool affiliating CGRA-related research and developing is to build a user-friendly, easy-to-use,  CGRA compilation framework. 
+The CGRA-Tool is a compiler for scheduling LLVM IR code to PE array-like architectures, such as CGRAs. It's designed to be a fully free-to-use, newbie-friendly software to assist CGRA research and CGRA compiler development. Using CGRA-Tool, you do not need to get a license of Gurobi like using CGRA-ME. It's also designed to be a standalone executable binary. CGRA-Tool includes a DFG analyzer to build the DFG graph using LLVM IR as input, an MRRG builder to build the MRRG graph given a CGRA architecture, and a mapper that can map LLVM loops in the form of IR to targeted CGRA.
 
 # Install on Ubuntu24.04
 

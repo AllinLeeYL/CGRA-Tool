@@ -9,6 +9,10 @@ project(CGRA-Tool
 # set(CPACK_PROJECT_VERSION ${PROJECT_VERSION})
 # include(CPack)
 
+if (DEFINED ENV{CMAKE_PREFIX_PATH})
+  set(CMAKE_PREFIX_PATH "$ENV{CMAKE_PREFIX_PATH};${CMAKE_PREFIX_PATH}")
+endif()
+
 # whether to compile LLVM pass plugin (default: OFF)
 set (BUILD_LLVM_PASSES OFF)
 set (CMAKE_CXX_STANDARD 20)
