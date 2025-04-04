@@ -10,11 +10,6 @@ target_link_libraries(cgra-tool
     PUBLIC hardware-modeler
     PUBLIC dfg
     PUBLIC mapper
-    PUBLIC LLVMSupport 
-    PUBLIC LLVMPasses 
-    PUBLIC LLVMCore 
-    PUBLIC LLVMIRReader
-    PUBLIC LLVMCodeGen
 )
 
 if(BUILD_LLVM_PASSES)

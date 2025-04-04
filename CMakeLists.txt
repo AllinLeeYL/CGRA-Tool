@@ -48,11 +48,6 @@ find_package(ortools REQUIRED CONFIG)
 get_target_property(ORTOOLS_INCLUDE_DIRS ortools::ortools INTERFACE_INCLUDE_DIRECTORIES)
 list(GET ORTOOLS_INCLUDE_DIRS 0 ORTOOLS_INCLUDE_DIRS)
 
-# set_target_properties(ortools::ortools PROPERTIES
-#     IMPORTED_NO_SONAME FALSE
-#     IMPORTED_LOCATION "${ORTOOLS_INCLUDE_DIRS}/../lib/libortools.9.dylib"
-# )
-
 include_directories(BEFORE
     ${INCLUDE_DIR}
     ${LLVM_INCLUDE_DIRS}
