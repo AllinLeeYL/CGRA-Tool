@@ -42,8 +42,6 @@ public:
     llvm::Instruction* inst;
     int intVal;
     float floatVal;
-    int earliestCycle;
-    int latestCycle;
     int cycle;
     
 public:
@@ -141,16 +139,6 @@ public:
      */
     std::vector<DFGNode*> getOpsOfCycle(int T0, int T1);
 
-    /** @brief This function will retrieve OPs of which latestCycle=T from the DFG.
-     *
-     *  @return The returned vector will remain the same order whenever it's called
-     */
-    std::vector<DFGNode*> getOpsOfLatestCycle(int);
-    /** @brief This function will retrieve OPs of which T0 <= latestCycle < T1
-     *
-     *  @return The returned vector will remain the same order whenever it's called
-     */
-    std::vector<DFGNode*> getOpsOfLatestCycle(int T0, int T1);
     std::vector<DFGEdge> getEdges(bool visibleOnly=true);
 
     std::vector<DFGEdge> getEdgesTo(DFGNode*, bool visibleOnly=true, bool noAnti=true);

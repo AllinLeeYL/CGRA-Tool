@@ -9,15 +9,14 @@
 
 namespace cgratool{
 
+/* Basic Mesh Topology */
 class CGRA{
 public:
     std::vector<PE> PEs; 
     std::vector<std::pair<PE, PE>> connections; // default 1-direction conn.
     int nodeID;
-
 public:
     int row, col;
-
 public:
     CGRA();
     CGRA(int row, int col);
@@ -27,6 +26,17 @@ public:
     int getPECount();
     void generateDot(std::ostream& f);
     void generateVerilog(std::ostream& f);
+};
+
+/* 1-hop (ADRES) Topology */
+class CGRA1Hop : public CGRA {
+public:
+    CGRA1Hop();
+    CGRA1Hop(int, int);
+    CGRA1Hop(const CGRA1Hop& other);
+    CGRA1Hop& operator=(const CGRA1Hop& other);
+    ~CGRA1Hop();
+    int getPECount();
 };
 
 }

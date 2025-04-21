@@ -44,12 +44,12 @@ Mapping ExhaustiveMapper::mapII(int II, int time_limit)
     std::map<DFGNode *, std::vector<MRRGNode *>> mappable_places;
     dfg->calculateCycle();
     std::sort(ops.begin(), ops.end(), [](const DFGNode *lhs, const DFGNode *rhs)
-              { return lhs->latestCycle < rhs->latestCycle; });
+              { return lhs->cycle < rhs->cycle; });
     for (DFGNode *node : ops)
     {
         std::vector<MRRGNode *> mrrgnodes;
-        for (MRRGNode *mrrgnode : mrrg.getFUsOfT(node->earliestCycle,
-                                                 node->latestCycle + 1))
+        for (MRRGNode *mrrgnode : mrrg.getFUsOfT(node->cycle,
+                                                 node->cycle + 1))
         {
             if (mrrgnode->supportOP(node->opCode))
                 mrrgnodes.push_back(mrrgnode);

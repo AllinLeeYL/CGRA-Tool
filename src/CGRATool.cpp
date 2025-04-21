@@ -27,10 +27,14 @@ using style = rang::style; // console font style
 
 cl::OptionCategory CGRACat("toycgra Options");
 
-static cl::opt<std::string> InputFilename(cl::Positional,
+static cl::opt<std::string> InputFileName(cl::Positional,
                                           cl::desc("<input IR file>"),
                                           cl::init(""),
-                                          cl::value_desc("filename"));
+                                          cl::value_desc(".ll filename"));
+
+static cl::opt<std::string> OutputFileName("o",
+                                           cl::desc("output mapping filename"),
+                                           cl::init("mapping.dot"));
 
 static cl::list<std::string> BasicBlocks (
     "bb",
@@ -38,29 +42,45 @@ static cl::list<std::string> BasicBlocks (
                    "If an unnamed basic block is to be accelerated,\n"
                    "'%' should be added before the basic block variable names.\n"
                    "eg:\n"
-                   "  --bb=f:bb1;bb2 will extract one function with bb1 and bb2;\n"
+                   "  --bb=f:bb1,bb2 will extract one function with bb1 and bb2;\n"
                    "  --bb=f:%1 will extract one function with unnamed bb 1;\n"),
-    cl::value_desc("function:bb1[;bb2...]"),
+    cl::value_desc("function:bb1[,bb2...]"),
     cl::cat(CGRACat)
 );
 /* optional parameters */
 static cl::opt<unsigned> ROW_SIZE (
-    "cgra-row-size", cl::init(4), 
+    "row-size", cl::init(4), 
     cl::desc("Set the row size of the PE array of CGRA."),
     cl::cat(CGRACat)
 );
 
 static cl::opt<unsigned> COL_SIZE (
-    "cgra-col-size", cl::init(4), 
+    "col-size", cl::init(4), 
     cl::desc("Set the column size of the PE array of CGRA."),
     cl::cat(CGRACat)
 );
 
 static cl::opt<std::string> ILPSolver (
     "ilp-solver", cl::init("CP-SAT"), 
-    cl::desc("Available solvers: <CP-SAT|SCIP>"),
+    cl::desc("select the solver"),
+    cl::value_desc("CP-SAT|SCIP"),
     cl::cat(CGRACat)
 );
+
+static cl::opt<std::string> Arch (
+    "arch", cl::init("mesh"), 
+    cl::desc("select the pre-defined architecture"),
+    cl::value_desc("mesh|1hop"),
+    cl::cat(CGRACat)
+);
+
+static cl::opt<bool> Debug (
+    "ndebug", 
+    cl::desc("not output debug information (dfg.dot) if this flag is set"),
+    cl::cat(CGRACat)
+);
+
+void do_mapping(std::vector<BasicBlock*>);
 
 int main(int argc, char** argv) {
     InitLLVM X(argc, argv);
@@ -69,7 +89,7 @@ int main(int argc, char** argv) {
 
     SMDiagnostic Err;
     LLVMContext Context;
-    std::unique_ptr<Module> M = getLazyIRFileModule(InputFilename, Err, Context);
+    std::unique_ptr<Module> M = getLazyIRFileModule(InputFileName, Err, Context);
     if (!M) {
         Err.print(argv[0], errs());
         return 1;
@@ -88,15 +108,8 @@ int main(int argc, char** argv) {
     ModulePassManager PM;
     PM.run(*M, MAM);
 
-    LOG_INFO<<"Arguments:\n";
-    LOG_INFO<<"\t*row-size: "<<ROW_SIZE<<"\n";
-    LOG_INFO<<"\t*col-size: "<<COL_SIZE<<"\n";
-    LOG_INFO<<"\t*bb: "; 
-    for (StringRef strPair : BasicBlocks) {std::cout<<strPair.str()<<",";}
-    std::cout<<"\n";
-
-    /* get map <func:<bb, ...>> */
-    std::map<Function*, std::vector<BasicBlock*>> FBMap;
+    /* --- Below are the code building function <-> basic mapping. --- */
+    std::map<Function*, std::vector<BasicBlock*>> FBMap; /* <func:<bb, ...>> */
     for (StringRef strPair : BasicBlocks) {
         const auto & [func_name, bbs] = strPair.split(":");
         Function* F = M->getFunction(func_name);
@@ -106,8 +119,10 @@ int main(int argc, char** argv) {
             return 1;
         }
         SmallVector<StringRef> bb_names;
-        bbs.split(bb_names, ";", /*MaxSplit=*/-1, /*KeepEmpty=*/false);
+        bbs.split(bb_names, ",", /*MaxSplit=*/-1, /*KeepEmpty=*/false);
         for (StringRef bb_name : bb_names) {
+/* The current version of llvm prefer not to use getNameOrAsOperand() somehow.
+   The code below is to provide support of unnamed BBs. */
 #ifndef NDEBUG
             auto Res = llvm::find_if(func->first(), [&](const BasicBlock &BB) {
                 return BB.getNameOrAsOperand() == bb_name;
@@ -147,6 +162,7 @@ int main(int argc, char** argv) {
         exit(1);
     }
 
+    /* Make sure that BBs make up a loop */
     std::vector<std::vector<BasicBlock*>> loops;
     for (auto & [func, bbs] : FBMap) {
         LoopInfo &LI = FAM.getResult<LoopAnalysis>(*func);
@@ -160,9 +176,7 @@ int main(int argc, char** argv) {
                 for (BasicBlock* bb : lbbs) {
                     auto iter = std::find(bbs.begin(), bbs.end(), bb);
                     if (iter == bbs.end()) {
-                        errs()<<"Couldn't find bb"
-                              <<*bb<<" in loop "
-                              <<*loop<<"\n";
+                        errs()<<"Couldn't find bb"<<*bb<<" in loop "<<*loop<<"\n";
                         exit(1);
                     }
                     bbs.erase(iter);
@@ -174,7 +188,7 @@ int main(int argc, char** argv) {
             errs()<<"bb";
             for (BasicBlock* bb : bbs)
                 errs()<<*bb;
-            errs()<<"don't belong to any loop. Treating them as loops may causing unexpected behavios.\n";
+            errs()<<"don't belong to any loop. Treating them as loops may causing unexpected behaviours.\n";
             std::vector<BasicBlock*> dangerousLoop;
             for (BasicBlock* bb : bbs)
                 dangerousLoop.push_back(bb);
@@ -183,49 +197,64 @@ int main(int argc, char** argv) {
     }
 
     for (std::vector<BasicBlock*> loop : loops) {
-        /* Construct the DFG, the CGRA, and the mapper. */
-        cgratool::DFG dfg(loop);
-        cgratool::CGRA cgra(ROW_SIZE, COL_SIZE);
+        do_mapping(loop);
+    }
+}
 
-        /* Choose a mapper */
-        cgratool::ILPMapper mapper(&dfg, cgra, ILPSolver);
-        // cgratool::ExhaustiveMapper mapper(&dfg, cgra);
-        // HeuristicMapper mapper(&dfg, &cgra);
+void do_mapping(std::vector<BasicBlock*> bbvec) {
+    /* Construct the DFG, the CGRA, and the mapper. */
+    cgratool::DFG dfg(bbvec);
+    cgratool::CGRA cgra;
+    if (Arch == "mesh")
+        cgra = cgratool::CGRA(ROW_SIZE, COL_SIZE);
+    else if (Arch == "1hop")
+        cgra = cgratool::CGRA1Hop(ROW_SIZE, COL_SIZE);
+    else {
+        LOG_ERROR<<"no such architecture: "<<Arch<<"\n";
+        exit(1);
+    }
 
-        int RecMII = mapper.getRecMII();
-        int ResMII = mapper.getResMII();
-        std::cout<<fg::cyan<<"[INFO] "<<fg::reset<<"RecMII="<<RecMII<<" ResMII="<<ResMII<<"\n";
-        int MII = std::max(RecMII, ResMII);
+    /* Choose a mapper */
+    cgratool::ILPMapper mapper(&dfg, cgra, ILPSolver);
+    // cgratool::ExhaustiveMapper mapper(&dfg, cgra);
+    // HeuristicMapper mapper(&dfg, &cgra);
 
-        // Display & Debug
+    int RecMII = mapper.getRecMII();
+    int ResMII = mapper.getResMII();
+    std::cout<<fg::cyan<<"[INFO] "<<fg::reset<<"RecMII="<<RecMII<<" ResMII="<<ResMII<<"\n";
+    int MII = std::max(RecMII, ResMII);
+
+    // Display & Debug
+    if (Debug) {
         std::ofstream fdfg("dfg.dot", std::ios::out);
         dfg.generateDot(fdfg);
         fdfg.close();
         fdfg = std::ofstream("dfg-more.dot", std::ios::out);
         dfg.generateDot(fdfg, true);
         fdfg.close();
-        // std::ofstream fcgra("cgra.dot", std::ios::out);
-        // cgra.generateDot(fcgra);
-        // fcgra.close();
-        // std::ofstream fverilog("cgra.v", std::ios::out);
-        // cgra.generateVerilog(fverilog);
-        // fverilog.close();
-
-        auto start = std::chrono::high_resolution_clock::now();
-        // cgratool::Mapping mapping = mapper.map(MII);
-        cgratool::Mapping mapping = mapper.map(MII); //! restore to original after debugging dummy
-        auto end = std::chrono::high_resolution_clock::now();
-        auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
-
-        if (mapping.isNull())
-            LOG_WARNING<<"Could not find a legal mapping.\n";
-        else {
-            std::cout<<fg::green<<"Congratulations! "<<fg::reset<<"A legal mapping exists.\n";
-            std::ofstream fmapping("mapping.dot", std::ios::out);
-            mapping.generateDot(fmapping);
-            fmapping.close();
-        }
-        std::cout<<fg::cyan<<"[INFO] "<<fg::reset<<"Total time used: "<<duration.count()<<"ms.\n";
-        return 0;
     }
+    // std::ofstream fcgra("cgra.dot", std::ios::out);
+    // cgra.generateDot(fcgra);
+    // fcgra.close();
+    // std::ofstream fverilog("cgra.v", std::ios::out);
+    // cgra.generateVerilog(fverilog);
+    // fverilog.close();
+
+    auto start = std::chrono::high_resolution_clock::now();
+    // cgratool::Mapping mapping = mapper.map(MII);
+    cgratool::Mapping mapping = mapper.map(MII); //! restore to original after debugging dummy
+    auto end = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+
+    if (mapping.isNull())
+        LOG_WARNING<<"Could not find a legal mapping.\n";
+    else {
+        std::cout<<GREEN("Congratulations! ")<<"A legal mapping exists.\n";
+        std::ofstream fmapping(OutputFileName, std::ios::out);
+        mapping.generateDot(fmapping);
+        fmapping.close();
+        LOG_INFO<<"The mapping has been written into \""<<OutputFileName<<"\"\n";
+    }
+    LOG_INFO<<"Mapping time used: "<<duration.count()<<"ms.\n";
+    return;
 }

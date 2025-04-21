@@ -73,11 +73,10 @@ DFG::DFG(std::vector<llvm::BasicBlock*>& BBs){
     this->nodes.push_back(rootnode);
     // extract instructions to this->insts
     for(BasicBlock* bb: BBs) {
-        outs()<<"bb "<<bb->getName().str()<<":\n";
         BasicBlock::iterator iter=bb->begin();
         for(; iter!=bb->end(); iter++) {
             this->insts.push_back(&*iter);
-            outs()<<"  "<<*iter<<"\n";
+            // outs()<<"  "<<*iter<<"\n";
         }
         if (!isa<BranchInst>(&*(--iter))) {
             LOG_WARNING<<"basic block doens not end with terminal instruction may cause unexpected errors!\n";
@@ -163,19 +162,6 @@ std::vector<DFGNode*> DFG::getOpsOfCycle(int T0, int T1) {
     std::vector<DFGNode*> ops;
     for (DFGNode* node : this->nodes) {
         if (node->isOp() && T0<=node->cycle && node->cycle<T1)
-            ops.push_back(node);
-    }
-    return ops;
-}
-
-std::vector<DFGNode*> DFG::getOpsOfLatestCycle(int T) {
-    return this->getOpsOfLatestCycle(T, T+1);
-}
-
-std::vector<DFGNode*> DFG::getOpsOfLatestCycle(int T0, int T1) {
-    std::vector<DFGNode*> ops;
-    for (DFGNode* node : this->nodes) {
-        if (node->isOp() && T0<=node->latestCycle && node->latestCycle<T1)
             ops.push_back(node);
     }
     return ops;
@@ -299,7 +285,7 @@ int DFG::getRecMII() {
     // Core
     int maxII = -1;
     for (DFGEdge edge : tedges) {
-        int II = edge.src->earliestCycle - edge.des->latestCycle + 1;
+        int II = edge.src->cycle - edge.des->cycle + 1;
         maxII = II > maxII ? II : maxII;
     }
     return maxII;
@@ -375,19 +361,9 @@ std::vector<std::vector<DFGNode*>> DFG::topologySortedNodes(bool r) {
 void DFG::calculateCycle() {
     if (this->cycleIsCalculated)
         return;
-    // assign property: earliest cycle
-    std::vector<std::vector<DFGNode*>> sortedNodes = this->topologySortedNodes();
-    int cycle;
-    for (cycle=0; cycle<sortedNodes.size(); cycle++)
-        for (DFGNode* n : sortedNodes[cycle])
-            n->earliestCycle = cycle;
-    // assign property: latest cycle
-    cycle = cycle - 1;
-    std::vector<std::vector<DFGNode*>> rsortedNodes = this->topologySortedNodes(true);
-    for (int i=0; i<rsortedNodes.size(); i++)
-        for (DFGNode* n : rsortedNodes[i])
-            n->latestCycle = cycle - i;
     // assign property: cycle
+    std::vector<std::vector<DFGNode*>> sortedNodes = this->topologySortedNodes();
+    std::vector<std::vector<DFGNode*>> rsortedNodes = this->topologySortedNodes(true);
     for (DFGNode* n : sortedNodes[0])
         n->cycle = 0;
     for (int i=1; i<sortedNodes.size(); i++) {

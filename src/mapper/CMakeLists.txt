@@ -2,7 +2,6 @@ add_library(mapper OBJECT
     MRRG.cpp
     Mapper.cpp
     ExhaustiveMapper.cpp
-    HeuristicMapper.cpp
     FeasibleMapper.cpp
     ILPMapper.cpp
     Mapping.cpp
