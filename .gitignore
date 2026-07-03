@@ -5,9 +5,11 @@
 
 # developing folder
 build/
-scripts/
 install/
 playground/
+
+# vcpkg folder
+vcpkg_installed/
 
 # intermediate files
 *.dot

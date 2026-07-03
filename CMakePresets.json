@@ -15,8 +15,8 @@
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "Debug",
                 "CMAKE_PREFIX_PATH": "",
-                "CMAKE_TOOLCHAIN_FILE": "",
-                "CMAKE_INSTALL_PREFIX": "${sourceDir}/install/${presetName}"
+                "CMAKE_INSTALL_PREFIX": "${sourceDir}/install/${presetName}",
+                "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
             }
         },
         {
@@ -28,8 +28,8 @@
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "Release",
                 "CMAKE_PREFIX_PATH": "",
-                "CMAKE_TOOLCHAIN_FILE": "",
-                "CMAKE_INSTALL_PREFIX": "${sourceDir}/install/${presetName}"
+                "CMAKE_INSTALL_PREFIX": "${sourceDir}/install/${presetName}",
+                "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
             }
         }
     ],

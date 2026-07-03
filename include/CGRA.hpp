@@ -26,6 +26,9 @@ public:
     ~CGRA();
     void init2dmesh(int row, int col);
     int getPECount();
+
+    /* IO */
+    bool loadFromToml(std::istream& f);
     void generateDot(std::ostream& f);
     void generateVerilog(std::ostream& f);
 };

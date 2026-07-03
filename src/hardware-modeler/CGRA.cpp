@@ -1,4 +1,5 @@
 #include "CGRA.hpp"
+#include "toml++/toml.hpp"
 
 using namespace std;
 using namespace cgratool;
@@ -56,6 +57,18 @@ CGRA::~CGRA() {
 
 int CGRA::getPECount() {
     return this->row * this->col;
+}
+
+bool CGRA::loadFromToml(istream& f) {
+    toml::table tbl;
+    try {
+        tbl = toml::parse(f);
+        std::cout << tbl << "\n";
+    } catch (const toml::parse_error& err) {
+        std::cerr << "Parsing failed:\n" << err << "\n";
+        return false;
+    }
+    return true;
 }
 
 void CGRA::generateDot(ostream& f) {
