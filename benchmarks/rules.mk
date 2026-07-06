@@ -4,6 +4,8 @@ LLVM-DIS := llvm-dis
 
 BENCHNAME ?= $(shell basename `pwd`)
 
+CGRA_MAPPER ?= cgra-tool
+
 source_files := $(wildcard *.cpp)
 bc_files := $(source_files:%.cpp=%.bc)
 ll_files := $(source_files:%.cpp=%.ll)
@@ -14,17 +16,23 @@ OPT_DISABLE_FLAGS ?= -fno-vectorize -fno-slp-vectorize -fno-unroll-loops -ffp-co
 
 ## COMMON TARGETS ##
 
-.DEFAULT: build
+.DEFAULT: run
 
-build: ${ll_files}
-
-.PHONY: build extract
+## FOR RUNNING ##
 
 run: run_mapper
 
+run_mapper:
+	${CGRA_MAPPER} ${ARGS} --arch=${ARCH} ${BENCHNAME}.ll
+
 ## FOR BUILDING ##
 
+build: ${ll_files}
+
+.PHONY: run run_mapper build extract
+
 .PRECIOUS: %.bc
+
 %.bc:
 	${CLANG++} -emit-llvm -c '$*.cpp' -o '$*.bc' $(CFLAGS) $(OPT_DISABLE_FLAGS)
 
@@ -36,8 +44,3 @@ clean:
 
 cleanall:
 	- rm -f *.bc *.ll *.dot
-
-## FOR RUNNING ##
-
-run_mapper:
-	'$(CGRA_MAPPER)' $(CGRA_MAPPER_ARGS) $(CGRA_ARCH_ARGS) -g $(firstword $(DFG_TARGETS))

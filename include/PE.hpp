@@ -13,10 +13,10 @@ class FU {
 public:
     std::vector<OPCode> supportedInsts;
 public:
-    FU();
-    FU(const FU& other);
+    // FU();
+    // FU(const FU& other);
     bool supportOP(OPCode op);
-    FU& operator=(const FU& other);
+    // FU& operator=(const FU& other);
     bool operator==(const FU& other) const;
 };
 
@@ -25,13 +25,16 @@ public:
 class PE {
 public:
     int ID;
+    bool hasMemPort;
+    int regNum;
+    int cfgNum;
     FU fu;
 public:
-    PE();
-    PE(int ID);
-    PE(const PE& other);
+    // PE();
+    // PE(int ID);
+    // PE(const PE& other);
     bool supportOP(OPCode op);
-    PE& operator=(const PE& other);
+    // PE& operator=(const PE& other);
     bool operator==(const PE& other) const;
     void generateVerilog(std::ostream& f);
 };

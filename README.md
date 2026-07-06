@@ -19,6 +19,7 @@ Prerequisities:
  - make
  - cmake
  - git
+ - vcpkg
 
 Install Google OR-Tools from source (recommended). Installing Google OR-Tools to `/usr/local` saves your time struggling with exposing 'ortoolsConfig.cmake' to CMake.
 

@@ -20,13 +20,13 @@ static std::map<OPCode, std::string> opExprs = {
 
 /* ------------- FU ------------- */
 
-FU::FU() {
-    this->supportedInsts = FULL_INSTS;
-}
+// FU::FU() {
+//     this->supportedInsts = FULL_INSTS;
+// }
 
-FU::FU(const FU& other) {
-    *this = other;
-}
+// FU::FU(const FU& other) {
+//     *this = other;
+// }
 
 bool FU::supportOP(OPCode op) {
     return std::find(this->supportedInsts.begin(),
@@ -34,10 +34,10 @@ bool FU::supportOP(OPCode op) {
                      op) != this->supportedInsts.end();
 }
 
-FU& FU::operator=(const FU& other) {
-    this->supportedInsts = other.supportedInsts;
-    return *this;
-}
+// FU& FU::operator=(const FU& other) {
+//     this->supportedInsts = other.supportedInsts;
+//     return *this;
+// }
 
 bool FU::operator==(const FU& other) const {
     return this->supportedInsts == other.supportedInsts;
@@ -45,29 +45,29 @@ bool FU::operator==(const FU& other) const {
 
 /* ------------- PE ------------- */
 
-PE::PE() {
-    this->ID = -1;
-    this->fu = FU();
-}
+// PE::PE() {
+//     this->ID = -1;
+//     this->fu = FU();
+// }
 
-PE::PE(int ID) {
-    this->ID = ID;
-    this->fu = FU();
-}
+// PE::PE(int ID) {
+//     this->ID = ID;
+//     this->fu = FU();
+// }
 
-PE::PE(const PE& other) {
-    *this = other;
-}
+// PE::PE(const PE& other) {
+//     *this = other;
+// }
 
 bool PE::supportOP(OPCode op) {
     return this->fu.supportOP(op);
 }
 
-PE& PE::operator=(const PE& other) {
-    this->ID = other.ID;
-    this->fu = other.fu;
-    return *this;
-}
+// PE& PE::operator=(const PE& other) {
+//     this->ID = other.ID;
+//     this->fu = other.fu;
+//     return *this;
+// }
 
 bool PE::operator==(const PE& other) const {
     return this->ID == other.ID

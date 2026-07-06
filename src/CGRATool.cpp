@@ -1,9 +1,12 @@
 #include <iostream>
 #include <fstream>
+#include <sstream>
 #include <set>
 #include <vector>
 #include <map>
 #include <chrono>
+#include <stdexcept>
+
 #include "Mapper.hpp"
 #include "json.hpp"
 #include "rang.hpp"
@@ -48,7 +51,7 @@ static cl::list<std::string> BasicBlocks (
 /* optional parameters */
 static cl::opt<std::string> ARCH (
     "arch", cl::init("2dmesh"),
-    cl::desc("The architecture to be used. Acceptable arguments are preset names and file names. Available preset architecture are: <2dmesh>"),
+    cl::desc("The architecture to be used. Acceptable arguments are preset names and file names. Available preset architecture are: <2dmesh|filename.toml>"),
     cl::cat(CGRACat)
 );
 static cl::opt<unsigned> ROW_SIZE (
@@ -191,51 +194,60 @@ int main(int argc, char** argv) {
         }
     }
 
-    for (std::vector<BasicBlock*> loop : loops) {
-        /* Construct the DFG, the CGRA, and the mapper. */
-        cgratool::DFG dfg(loop);
-        dfg.eliminatePhi();
-        cgratool::CGRA cgra(ROW_SIZE, COL_SIZE, ARCH);
+    try {
+        for (std::vector<BasicBlock*> loop : loops) {
+            /* Construct the DFG, the CGRA, and the mapper. */
+            cgratool::DFG dfg(loop);
+            dfg.eliminatePhi();
+            // cgratool::CGRA cgra(ROW_SIZE, COL_SIZE, ARCH);
+            std::ifstream farch(ARCH, std::ios::in);
+            if (!farch) {throw std::runtime_error("Failed to open " + ARCH + "\n");}
+            cgratool::CGRA cgra = cgratool::CGRA::loadFromToml(farch);
+            farch.close();
 
-        /* Choose a mapper */
-        cgratool::ILPMapper mapper(&dfg, cgra, ILPSolver);
-        // cgratool::ExhaustiveMapper mapper(&dfg, cgra);
-        // HeuristicMapper mapper(&dfg, &cgra);
+            /* Choose a mapper */
+            cgratool::ILPMapper mapper(&dfg, cgra, ILPSolver);
+            // cgratool::ExhaustiveMapper mapper(&dfg, cgra);
+            // HeuristicMapper mapper(&dfg, &cgra);
 
-        int RecMII = mapper.getRecMII();
-        int ResMII = mapper.getResMII();
-        std::cout<<fg::cyan<<"[INFO] "<<fg::reset<<"RecMII="<<RecMII<<" ResMII="<<ResMII<<"\n";
-        int MII = std::max(RecMII, ResMII);
+            int RecMII = mapper.getRecMII();
+            int ResMII = mapper.getResMII();
+            std::cout<<fg::cyan<<"[INFO] "<<fg::reset<<"RecMII="<<RecMII<<" ResMII="<<ResMII<<"\n";
+            int MII = std::max(RecMII, ResMII);
 
-        // Display & Debug
-        std::ofstream fdfg("dfg.dot", std::ios::out);
-        dfg.generateDot(fdfg);
-        fdfg.close();
-        fdfg = std::ofstream("dfg-more.dot", std::ios::out);
-        dfg.generateDot(fdfg, true);
-        fdfg.close();
-        // std::ofstream fcgra("cgra.dot", std::ios::out);
-        // cgra.generateDot(fcgra);
-        // fcgra.close();
-        // std::ofstream fverilog("cgra.v", std::ios::out);
-        // cgra.generateVerilog(fverilog);
-        // fverilog.close();
+            // Display & Debug
+            std::ofstream fdfg("dfg.dot", std::ios::out);
+            dfg.generateDot(fdfg);
+            fdfg.close();
+            fdfg = std::ofstream("dfg-more.dot", std::ios::out);
+            dfg.generateDot(fdfg, true);
+            fdfg.close();
+            // std::ofstream fcgra("cgra.dot", std::ios::out);
+            // cgra.generateDot(fcgra);
+            // fcgra.close();
+            // std::ofstream fverilog("cgra.v", std::ios::out);
+            // cgra.generateVerilog(fverilog);
+            // fverilog.close();
 
-        auto start = std::chrono::high_resolution_clock::now();
-        // cgratool::Mapping mapping = mapper.map(MII);
-        cgratool::Mapping mapping = mapper.map(MII); //! restore to original after debugging dummy
-        auto end = std::chrono::high_resolution_clock::now();
-        auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+            auto start = std::chrono::high_resolution_clock::now();
+            // cgratool::Mapping mapping = mapper.map(MII);
+            cgratool::Mapping mapping = mapper.map(MII); //! restore to original after debugging dummy
+            auto end = std::chrono::high_resolution_clock::now();
+            auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
 
-        if (mapping.isNull())
-            LOG_WARNING<<"Could not find a legal mapping.\n";
-        else {
-            std::cout<<fg::green<<"Congratulations! "<<fg::reset<<"A legal mapping exists.\n";
-            std::ofstream fmapping("mapping.dot", std::ios::out);
-            mapping.generateDot(fmapping);
-            fmapping.close();
+            if (mapping.isNull())
+                LOG_WARNING<<"Could not find a legal mapping.\n";
+            else {
+                std::cout<<fg::green<<"Congratulations! "<<fg::reset<<"A legal mapping exists.\n";
+                std::ofstream fmapping("mapping.dot", std::ios::out);
+                mapping.generateDot(fmapping);
+                fmapping.close();
+            }
+            std::cout<<fg::cyan<<"[INFO] "<<fg::reset<<"Total time used: "<<duration.count()<<"ms.\n";
+            return 0;
         }
-        std::cout<<fg::cyan<<"[INFO] "<<fg::reset<<"Total time used: "<<duration.count()<<"ms.\n";
-        return 0;
+    } catch (const std::exception& e) {
+        LOG_ERROR<<e.what();
+        exit(1);
     }
 }

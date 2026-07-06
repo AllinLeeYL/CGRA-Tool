@@ -1,10 +1,11 @@
 #include "CGRA.hpp"
 #include "toml++/toml.hpp"
 
+#include <stdexcept>
+#include <sstream>
+
 using namespace std;
 using namespace cgratool;
-
-CGRA::CGRA() {}
 
 CGRA::CGRA(int row, int col, std::string arch) {
     try {
@@ -59,16 +60,48 @@ int CGRA::getPECount() {
     return this->row * this->col;
 }
 
-bool CGRA::loadFromToml(istream& f) {
+CGRA CGRA::loadFromToml(istream& f) {
+    CGRA arch;
     toml::table tbl;
-    try {
-        tbl = toml::parse(f);
-        std::cout << tbl << "\n";
-    } catch (const toml::parse_error& err) {
-        std::cerr << "Parsing failed:\n" << err << "\n";
-        return false;
+
+    tbl = toml::parse(f);
+
+    /* peArr */
+    toml::array& arr = *(tbl["topology"]["peList"].as_array());
+    for (auto& t : arr) {
+        auto& e = *t.as_table();
+        PE pe;
+        pe.ID = e["id"].as_integer()->get();
+        pe.regNum = e["regNum"].as_integer()->get();
+        pe.cfgNum = e["cfgNum"].as_integer()->get();
+        pe.hasMemPort = e["hasMemPort"].as_boolean()->get();
+        arch.PEs.push_back(pe);
+        arch.adjList.push_back(std::vector<int>());
     }
-    return true;
+
+    /* adjList */
+    toml::array& conns = *(tbl["topology"]["connections"].as_array());
+    for (auto& t : conns) {
+        auto& e = *t.as_table();
+        int id = e["node"].as_integer()->get();
+        toml::array& neighbors = *(e["neighbors"].as_array());
+        for (auto& t : neighbors) {
+            arch.adjList[id].push_back(t.as_integer()->get());
+        }
+    } 
+
+    /* daisyChains */
+    toml::array& daisyChains = *(tbl["topology"]["daisyChains"].as_array());
+    for (auto& e : daisyChains) {
+        arch.daisyChains.push_back(std::vector<int>());
+        toml::array& chain = *(e.as_array());
+        for (auto& t : chain) {
+            int id = t.as_integer()->get();
+            arch.daisyChains.back().push_back(id);
+        }
+    } 
+
+    return arch;
 }
 
 void CGRA::generateDot(ostream& f) {

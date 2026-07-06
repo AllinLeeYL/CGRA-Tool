@@ -1,0 +1,25 @@
+[topology]
+daisyChains = [
+  [0, 1]
+]
+
+[[topology.peList]]
+id = 0
+regNum = 2
+cfgNum = 32
+hasMemPort = true
+
+[[topology.peList]]
+id = 1
+regNum = 2
+cfgNum = 32
+hasMemPort = false
+
+
+[[topology.connections]]
+node = 0
+neighbors = [1]
+
+[[topology.connections]]
+node = 1
+neighbors = [0]

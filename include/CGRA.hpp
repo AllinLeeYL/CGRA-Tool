@@ -12,14 +12,17 @@ namespace cgratool{
 class CGRA{
 public:
     std::vector<PE> PEs; 
-    std::vector<std::pair<PE, PE>> connections; // default 1-direction conn.
+    std::vector<std::vector<int>> adjList;
+    std::vector<std::vector<int>> daisyChains;
+    std::vector<std::pair<PE, PE>> connections; // deprecated default 1-direction conn.
     int nodeID;
 
 public:
     int row, col;
 
+
 public:
-    CGRA();
+    CGRA() = default;
     CGRA(int row, int col, std::string arch);
     CGRA(const CGRA& other);
     CGRA& operator=(const CGRA& other);
@@ -27,8 +30,12 @@ public:
     void init2dmesh(int row, int col);
     int getPECount();
 
+    /* graph modification */
+    // bool addVertex(PE);
+    // bool addEdge(int, int);
+
     /* IO */
-    bool loadFromToml(std::istream& f);
+    static CGRA loadFromToml(std::istream& f);
     void generateDot(std::ostream& f);
     void generateVerilog(std::ostream& f);
 };
