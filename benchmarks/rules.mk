@@ -29,7 +29,7 @@ run_mapper:
 
 build: ${ll_files}
 
-.PHONY: run run_mapper build extract
+.PHONY: run run_mapper build extract loopcount schedulability
 
 .PRECIOUS: %.bc
 
@@ -38,6 +38,15 @@ build: ${ll_files}
 
 %.ll: %.bc
 	${LLVM-DIS} '$*.bc'
+
+loopcount:
+	opt -passes='print<scalar-evolution>' -disable-output ${BENCHNAME}.ll
+
+accessinfo:
+	opt -passes='print<access-info>' -disable-output ${BENCHNAME}.ll
+
+schedulability:
+	opt -load-pass-plugin=../../install/release/lib/schedulability-pass.so -passes='schedulability' ${BENCHNAME}.ll
 
 clean:
 	- rm -f *.dot

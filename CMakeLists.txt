@@ -14,7 +14,7 @@ if (DEFINED ENV{CMAKE_PREFIX_PATH})
 endif()
 
 # whether to compile LLVM pass plugin (default: OFF)
-set (BUILD_LLVM_PASSES OFF)
+set (BUILD_LLVM_PASSES ON)
 set (CMAKE_CXX_STANDARD 23)
 set (BUILD_SHARED_LIBS OFF)
 # set(CMAKE_MACOSX_RPATH 0)

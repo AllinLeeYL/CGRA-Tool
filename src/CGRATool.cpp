@@ -13,6 +13,8 @@
 #include "llvm/IR/Module.h"
 #include "llvm/IRReader/IRReader.h"
 #include "llvm/Analysis/LoopInfo.h"
+#include "llvm/Analysis/ScalarEvolution.h"
+#include "llvm/Analysis/LoopAccessAnalysis.h"
 #include "llvm/Analysis/LoopIterator.h"
 #include "llvm/Analysis/LoopAnalysisManager.h"
 #include "llvm/Analysis/CGSCCPassManager.h"
@@ -72,9 +74,9 @@ static cl::opt<std::string> ILPSolver (
     cl::cat(CGRACat)
 );
 
+
 int main(int argc, char** argv) {
     InitLLVM X(argc, argv);
-    // cl::HideUnrelatedOptions({&CGRACat, &getColorCategory()});
     cl::HideUnrelatedOptions({&CGRACat});
     cl::ParseCommandLineOptions(argc, argv, "A CGRA mapper takes IR as input and outputs mapping.\n");
 
@@ -101,97 +103,22 @@ int main(int argc, char** argv) {
 
     /* help info */
     LOG_INFO<<"Arguments:\n";
-    LOG_INFO<<"\t*row-size: "<<ROW_SIZE<<"\n";
-    LOG_INFO<<"\t*col-size: "<<COL_SIZE<<"\n";
-    LOG_INFO<<"\t*bb: "; 
-    for (StringRef strPair : BasicBlocks) {std::cout<<strPair.str()<<",";}
-    std::cout<<"\n";
+    LOG_INFO<<"\ttopology: "<<ARCH<<"\n"; 
 
-    /* get map <func:<bb, ...>> */
-    std::map<Function*, std::vector<BasicBlock*>> FBMap;
-    for (StringRef strPair : BasicBlocks) {
-        const auto & [func_name, bbs] = strPair.split(":");
-        Function* F = M->getFunction(func_name);
-        if (!F) {
-            errs() << argv[0] << ": program doesn't contain a function named '"
-                   << func_name << "'!\n";
-            return 1;
-        }
-        SmallVector<StringRef> bb_names;
-        bbs.split(bb_names, ";", /*MaxSplit=*/-1, /*KeepEmpty=*/false);
-        for (StringRef bb_name : bb_names) {
-#ifndef NDEBUG
-            auto Res = llvm::find_if(func->first(), [&](const BasicBlock &BB) {
-                return BB.getNameOrAsOperand() == bb_name;
-            });
-#else   
-            llvm::Function::iterator Res;
-            if (bb_name.substr(0, 1) == "%") {
-                Res = std::find_if(F->begin(), 
-                                   F->end(), 
-                                   [&](const BasicBlock &BB) {
-                    std::string tmpName;
-                    raw_string_ostream OS(tmpName);
-                    BB.printAsOperand(OS, false);
-                    return OS.str() == bb_name;
-                });
-            } else {
-                Res = std::find_if(F->begin(), 
-                                   F->end(),
-                                   [&](const BasicBlock &BB) {
-                    return BB.getName() == bb_name;
-                });
-            }   
-#endif
-            if (Res == F->end()) {
-                errs() << argv[0] << ": program doesn't contain a basic block named '"
-                       << bb_name << "'!\n";
-                return 1;
-            }
-            if (FBMap.count(F))
-                FBMap[F].push_back(&*Res);
-            else
-                FBMap[F] = std::vector<BasicBlock*> {&*Res};
-        }
-    }
-    if (FBMap.empty()) {
-        cl::PrintHelpMessage();
-        exit(1);
-    }
+    Function* F = M->getFunction("dummy");
 
     std::vector<std::vector<BasicBlock*>> loops;
-    for (auto & [func, bbs] : FBMap) {
-        LoopInfo &LI = FAM.getResult<LoopAnalysis>(*func);
-        for (Loop* loop : LI) {
+    LoopInfo &LI = FAM.getResult<LoopAnalysis>(*F);
+    // ScalarEvolution &SE = FAM.getResult<ScalarEvolutionAnalysis>(F);
+    // LoopAccessAnalysis &LAA = FAM.getResult<LoopAccessAnalysis>(F);
+    for (Loop* loop : LI) {
+        if (!loop->getSubLoops().empty()) 
+            continue;
+        // const LoopAccessInfo& LAI = LAA.getInfo(*loop);
+        // if (isStaticallySchedulable(*loop, SE, LAI)) {
             std::vector<BasicBlock*> lbbs = loop->getBlocks().vec();
-            if (std::find(bbs.begin(), bbs.end(), *lbbs.begin()) != bbs.end()) {
-                if (!loop->getSubLoops().empty()) {
-                    errs()<<"Subloop isn't empty!\n";
-                    exit(1);
-                }
-                for (BasicBlock* bb : lbbs) {
-                    auto iter = std::find(bbs.begin(), bbs.end(), bb);
-                    if (iter == bbs.end()) {
-                        errs()<<"Couldn't find bb"
-                              <<*bb<<" in loop "
-                              <<*loop<<"\n";
-                        exit(1);
-                    }
-                    bbs.erase(iter);
-                }
-                loops.push_back(lbbs);
-            }
-        }
-        if (!bbs.empty()) {
-            errs()<<"bb";
-            for (BasicBlock* bb : bbs)
-                errs()<<*bb;
-            errs()<<"don't belong to any loop. Treating them as loops may causing unexpected behavios.\n";
-            std::vector<BasicBlock*> dangerousLoop;
-            for (BasicBlock* bb : bbs)
-                dangerousLoop.push_back(bb);
-            loops.push_back(dangerousLoop);
-        }
+            loops.push_back(lbbs);
+        // }
     }
 
     try {
