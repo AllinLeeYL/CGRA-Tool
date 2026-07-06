@@ -4,8 +4,15 @@
 #include "llvm/Analysis/LoopAccessAnalysis.h"
 #include "llvm/IR/Instructions.h"
 
-#include "llvm/Passes/PassPlugin.h"
-#include "llvm/Passes/PassBuilder.h"
+// 1. Check if the new LLVM 22+ path exists
+#if __has_include(<llvm/Plugins/PassPlugin.h>)
+    #include <llvm/Plugins/PassPlugin.h>
+#else
+    // 2. If not, fall back to the pre-LLVM 22 path
+    #include <llvm/Passes/PassPlugin.h>
+#endif
+
+#include <llvm/Passes/PassBuilder.h>
 
 using namespace llvm;
 
